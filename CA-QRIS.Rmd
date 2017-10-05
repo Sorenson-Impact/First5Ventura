@@ -1,0 +1,97 @@
+---
+title: "CA-QRIS"
+author: "Gwendolyn"
+date: "10/3/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(readxl)
+library(tidyverse)
+library(RCurl)
+library(jsonlite)
+
+```
+
+
+```{r}
+
+#### Get every third sheet into a new data frame ####
+nth <- function(x,n){
+  x[x%%n==0]
+}
+
+# Get a vector with every third number
+x <- 1:41
+every_third <- c(1, nth(x,3) + 1)
+
+combine_three <- function(sheet){
+  first <- read_excel("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Excel Readable CDF 2016-17 IMPACT.xlsx", sheet = sheet)
+  # Uses the first sheet to get the names
+  all_names <- names(first)
+  second <- (read_excel("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Excel Readable CDF 2016-17 IMPACT.xlsx", sheet = as.numeric(sheet + 1)))
+  # Reassign the names because sometimes there are minor changes.
+  names(second) <- all_names
+  third <- read_excel("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Excel Readable CDF 2016-17 IMPACT.xlsx", sheet = (sheet + 2))
+  names(third) <- all_names
+  # Bind them together
+  final <- rbind(first, second, third)
+  return(final)
+}
+
+
+# for every third sheet, apply my function above ^
+for(sheet in every_third){
+  # Assign is how you get the name to show
+  assign(paste("t",sheet,sep=""), combine_three(sheet))
+}
+
+```
+
+Get addresses using Google's API and retrieving an address for a list of Place IDs.  
+
+```{r qris addresses, echo=FALSE}
+
+test <- getURL("https://maps.googleapis.com/maps/api/geocode/json?address=high+st+hasting&components=country:GB&key=AIzaSyD-zNBSfEYtJfYivwS59ngWATWH-USxqNo")
+
+test2 <- fromJSON(test)
+
+
+
+test <- getURL("https://maps.googleapis.com/maps/api/geocode/json?address=Lopez+Family+Child+Care&components=postal_code:93033&key=AIzaSyD-zNBSfEYtJfYivwS59ngWATWH-USxqNo")
+
+
+address_list <- t1 %>% 
+  select(site_name, zipcode) %>% 
+  mutate(site_name = gsub("CDR - ", "", site_name)) %>% 
+  mutate(site_name = gsub("Cal-", "", site_name)) %>% 
+  mutate(site_name = gsub("CDI - ", "", site_name)) %>% 
+  mutate(site_name = gsub("CAPSLO - ", "", site_name)) %>% 
+  mutate(site_name = gsub("SAFE ", "", site_name)) %>% 
+  mutate(site_name = gsub("CDR/", "", site_name)) %>% 
+  mutate(site_name = gsub("CVUSD ‐ ", "", site_name)) %>% 
+  mutate(site_name = gsub("VUSD ‐ ", "", site_name)) %>% 
+  mutate(site_name = gsub("FCC", "Family Child Care", site_name)) %>% 
+  mutate(site_name = gsub("HS", "High School", site_name)) %>% 
+  mutate(site_name = gsub(" ", "+", site_name)) 
+  
+
+vec <- c()
+
+for(i in 1:nrow(address_list)){
+  raw <- getURL(paste0("https://maps.googleapis.com/maps/api/geocode/json?address=", address_list$site_name[i], "&components=postal_code:", address_list$zipcode[i], "&key=AIzaSyD-zNBSfEYtJfYivwS59ngWATWH-USxqNo"))
+  transformed <- fromJSON(raw)
+  
+  for_vec <- transformed$results$formatted_address[1]
+  
+  vec <- c(vec, for_vec)
+}
+
+address_list$address <- vec
+
+address_list <- address_list %>% 
+  mutate(site_name = gsub("+", " ", site_name, fixed=TRUE))
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
