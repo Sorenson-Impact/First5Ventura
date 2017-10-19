@@ -7,14 +7,20 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(readxl)
-library(tidyverse)
 library(RCurl)
 library(jsonlite)
+library(tidyverse)
+
+setwd("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /")
+knitr::opts_knit$set(root.dir = '~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /')
 
 ```
 
+##Introduction 
 
-```{r}
+This is my code for cleaning data for the First Five Ventura Project! Woot! 
+
+```{r echo=FALSE}
 
 #### Get every third sheet into a new data frame ####
 nth <- function(x,n){
@@ -46,51 +52,95 @@ for(sheet in every_third){
   assign(paste("t",sheet,sep=""), combine_three(sheet))
 }
 
+
 ```
 
 Get addresses using Google's API and retrieving an address for a list of Place IDs.  
 
 ```{r qris addresses, echo=FALSE}
 
-test <- getURL("https://maps.googleapis.com/maps/api/geocode/json?address=high+st+hasting&components=country:GB&key=AIzaSyD-zNBSfEYtJfYivwS59ngWATWH-USxqNo")
+# test <- getURL("https://maps.googleapis.com/maps/api/geocode/json?address=high+st+hasting&components=country:GB&key=AIzaSyD-zNBSfEYtJfYivwS59ngWATWH-USxqNo")
+# 
+# test2 <- fromJSON(test)
+# 
+# 
+# 
+# test <- getURL("https://maps.googleapis.com/maps/api/geocode/json?address=Lopez+Family+Child+Care&components=postal_code:93033&key=AIzaSyD-zNBSfEYtJfYivwS59ngWATWH-USxqNo")
 
-test2 <- fromJSON(test)
 
+##must call dplyr select explictly b/c another package has a select function. why anyone would use a common dplyr function name is beyond me. 
+# address_list <- t1 %>% 
+#   mutate(site_name = gsub("CDR - ", "", site_name)) %>% 
+#   mutate(site_name = gsub("Cal-", "", site_name)) %>% 
+#   mutate(site_name = gsub("CDI - ", "", site_name)) %>% 
+#   mutate(site_name = gsub("CAPSLO - ", "", site_name)) %>% 
+#   mutate(site_name = gsub("SAFE ", "", site_name)) %>% 
+#   mutate(site_name = gsub("CDR/", "", site_name)) %>% 
+#   mutate(site_name = gsub("CVUSD ‐ ", "", site_name)) %>% 
+#   mutate(site_name = gsub("VUSD ‐ ", "", site_name)) %>% 
+#   mutate(site_name = gsub("FCC", "Family Child Care", site_name)) %>% 
+#   mutate(site_name = gsub("HS", "High School", site_name)) %>% 
+#   mutate(site_name = gsub(" ", "+", site_name)) %>% 
+#   dplyr::select(site_name, zipcode)
+#   
+# 
+# vec <- c()
+# 
+# for(i in 1:nrow(address_list)){
+#   raw <- getURL(paste0("https://maps.googleapis.com/maps/api/geocode/json?address=", address_list$site_name[i], "&components=postal_code:", address_list$zipcode[i], "&key=AIzaSyD-zNBSfEYtJfYivwS59ngWATWH-USxqNo"))
+#   transformed <- fromJSON(raw)
+#   
+#   for_vec <- transformed$results$formatted_address[1]
+#   
+#   vec <- c(vec, for_vec)
+# }
+# 
+# address_list$address <- vec
+# 
+# address_list <- address_list %>% 
+#   mutate(site_name = gsub("+", " ", site_name, fixed=TRUE))
+# 
+# 
+# write.csv(address_list, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/qrisaddresses.csv")
 
+address_list <- read.csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/qrisaddresses.csv")
 
-test <- getURL("https://maps.googleapis.com/maps/api/geocode/json?address=Lopez+Family+Child+Care&components=postal_code:93033&key=AIzaSyD-zNBSfEYtJfYivwS59ngWATWH-USxqNo")
-
-
-address_list <- t1 %>% 
-  select(site_name, zipcode) %>% 
-  mutate(site_name = gsub("CDR - ", "", site_name)) %>% 
-  mutate(site_name = gsub("Cal-", "", site_name)) %>% 
-  mutate(site_name = gsub("CDI - ", "", site_name)) %>% 
-  mutate(site_name = gsub("CAPSLO - ", "", site_name)) %>% 
-  mutate(site_name = gsub("SAFE ", "", site_name)) %>% 
-  mutate(site_name = gsub("CDR/", "", site_name)) %>% 
-  mutate(site_name = gsub("CVUSD ‐ ", "", site_name)) %>% 
-  mutate(site_name = gsub("VUSD ‐ ", "", site_name)) %>% 
-  mutate(site_name = gsub("FCC", "Family Child Care", site_name)) %>% 
-  mutate(site_name = gsub("HS", "High School", site_name)) %>% 
-  mutate(site_name = gsub(" ", "+", site_name)) 
-  
-
-vec <- c()
-
-for(i in 1:nrow(address_list)){
-  raw <- getURL(paste0("https://maps.googleapis.com/maps/api/geocode/json?address=", address_list$site_name[i], "&components=postal_code:", address_list$zipcode[i], "&key=AIzaSyD-zNBSfEYtJfYivwS59ngWATWH-USxqNo"))
-  transformed <- fromJSON(raw)
-  
-  for_vec <- transformed$results$formatted_address[1]
-  
-  vec <- c(vec, for_vec)
-}
-
-address_list$address <- vec
 
 address_list <- address_list %>% 
-  mutate(site_name = gsub("+", " ", site_name, fixed=TRUE))
+  mutate(site_name = ifelse(zipcode==93036 & site_name=="Lopez Family Child Care", "86 Lopez Family Child Care", site_name))
+
+qris_all <- read.csv("~/Downloads/QRIS_all.csv")
+
+address_list <- address_list %>% 
+  mutate(IMPACT.SIT = X) %>% 
+  mutate(IMPACT.SIT = as.numeric(IMPACT.SIT)) %>% 
+  select(IMPACT.SIT, address)
+
+qris_all <- qris_all %>% 
+  slice(1:113) %>% 
+  mutate(IMPACT.SIT = as.numeric(IMPACT.SIT))
+
+qris_mg <- qris_all %>% 
+  inner_join(address_list, qris_all, by="IMPACT.SIT")
+
+
+qris_weird <- qris_mg %>% 
+  select()
+# all_tdata <- list("t4"=t4, "t7"=t7, "t10"=t10, "t13"=t13, "t16"=t16, "t19"=t19, "t22"=t22, "t25"=t25, "t28"=t28, "t31"=t31, "t34"=t34, "t37"=t37, "t40"=t40)
+# 
+# 
+# testfunction <- function(sites) {
+#   
+#   sites <- gsub("CDR - ", "", sites)
+#   return(sites)
+# }
+# 
+# all_tdata <- all_tdata %>% 
+#   map(~mutate_at(.x, "site_name", testfunction)) 
+
+
+
+
 
 ```
 
