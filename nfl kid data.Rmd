@@ -1,0 +1,441 @@
+---
+title: "First5 Ventura County NfL Preschool Slots Demographic Data"
+author: "Gwendolyn Reynolds"
+date: "November 7, 2017"
+output:
+  word_document: default
+  pdf_document: default
+  html_notebook: default
+---
+
+
+```{r setup, echo=FALSE, include=FALSE}
+library(knitr)
+library(tidyverse)
+library(readxl)
+library(scales)
+library(forcats)
+library(lubridate)
+library(stringr)
+library(dplyr)
+library(ggthemes)
+
+setwd("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /")
+#set_here("~/Google Drive/SI/DataScience/UAC_JRI/")
+knitr::opts_knit$set(root.dir = '~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /')
+knitr::fig_path("./output/")
+plot_directory <- "~/Google Drive/SI/DataScience/ADP/Utah_Odyssey"
+
+# Sorenson Impact colors we use in ggplot
+SI_design <- list(color_1 = "#005060", color_medium = "#1A818F", color_light = "#25AFC1", color_grey = "#58585A", color_light_grey = "E6E7E8", pacific = "#1D4F53", atlantic = "#18303C", carbon = "#6d6f71", granite = "#bcbdbf", silver = "#e6e7e7", arctic = "#107D7F")
+
+
+# Sorenson Impact design: a list of colors we use in ggplot
+SI_colorplot <- function() {data.frame("color" = names(unlist(SI_design)), "code" = unlist(SI_design), stringsAsFactors = F) %>% ggplot() + geom_rect(aes(fill = I(code)), xmin = 0, xmax = 1, ymin = 0, ymax = 1) + facet_wrap(~color)} #shows you our color options!
+# This will fill bar colors with Sorenson Impact colors and default to theme_minimal
+update_geom_defaults("bar", list(fill = SI_design$pacific))
+update_geom_defaults("smooth", list(colour = SI_design$pacific, fill = SI_design$arctic, alpha = I(2/10)))
+update_geom_defaults("point", list(colour = SI_design$pacific, fill = SI_design$pacific))
+
+theme_set(theme_minimal())
+theme_update(text = element_text(family = "Roboto"), axis.text = element_text(family = "Roboto"), strip.text = element_text(family = "Roboto"))
+
+
+
+## SI_ggsave 
+## This function will save plots in a default directory (set above) with an abbreviated version of the report title
+# There is an optional SI logo image using Magick. You can also change the background band color
+SI_ggsave <- function(filename = paste0(plot_directory, last_plot()$labels$title, "_", ab_report, ".png"),
+                      width = 6, height = 4, dpi = 300,
+                      add_logo = FALSE, logo_height_ratio = .05, band_color = SI_design$granite, add_border = NULL) {
+  
+  # Abbreviated name of the report: 
+  # We did this because it's nice to know which report the saved graphs are coming from
+  ab_report <- abbreviate(params$set_title)
+  # We use that and the plot title to create the file name
+  # !Be careful not to use the same plot title more than once!
+  # The following default variable is how the file is saved
+  # filename <- paste0(plot_directory, last_plot()$labels$title, "_", ab_report, ".png")
+  
+  # First we save the last plot with sensible defaults
+  ggsave(filename, width = width, height = height, dpi = dpi)
+  
+  # Now bring it back if we are adding the band
+  if(add_logo){
+    plot <- image_read(filename)
+    pwidth <- as.data.frame(image_info(plot))$width
+    pheight <- as.data.frame(image_info(plot))$height
+    # Load the logo and crop it to the width of the default plot, fig_width: 6
+    logo <- image_read("~/Github/SI_Project_Template/template_files/SI_logo_background.png") %>% 
+    image_scale(paste0("x", pheight * logo_height_ratio)) %>% #make the height of the logo equal to a ratio of the height of the plot. Defaults to 5%.
+    image_background(band_color, flatten = TRUE) %>% 
+    image_crop(paste0(pwidth, "x0+0+0")) #make the width of the logo match the width of the plot
+    
+    # The final version is stacked on top of the sorenson logo
+    final_plot <- image_append(c(plot, logo), stack = TRUE)
+    
+    # If a value has been given for border, add it
+    if(!is.null(add_border)) final_plot <- image_border(final_plot, add_border[1], add_border[2])
+    # And then we overwrite the standard ggsave call
+    image_write(final_plot, filename)
+  }
+}
+
+```
+
+
+#### A report prepared by the [Sorenson Impact Center](http://sorensonimpact.com/) Data Science team on behalf of First 5 Ventura
+
+```{r read in data, echo=FALSE, include=FALSE}
+
+nfl1 <- read.csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/VenturaFirst5 Export Client By Service Ventura 10-25-2017.csv")
+nfl2 <- read.csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/VenturaFirst5 Export Family Intake Ventura 10-25-2017.csv")
+nfl3 <- read.csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/VenturaFirst5 Export Import Member Ventura 10-25-2017.csv")
+nfl4 <- read.csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/VenturaFirst5 DRDP 2015 Pre and Post.csv")
+```
+
+
+```{r basic demographics, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+nfl2 <- nfl2 %>% 
+  mutate(assess.date = mdy(Assessment.Date),
+         Year = year(assess.date),
+         year_month = as.Date(cut(assess.date, breaks = "month")),
+         Month = month(assess.date),
+         Day = yday(assess.date))
+
+nfl3 <- nfl3 %>% 
+  mutate(assess.date = mdy(Assessment.Date),
+         Year = year(assess.date),
+         year_month = as.Date(cut(assess.date, breaks = "month")),
+         Month = month(assess.date),
+         Day = yday(assess.date))
+
+
+nfl2 %>% 
+  group_by(Zip) %>% 
+  tally()
+  
+nfl2 %>% 
+  group_by(Client.Program.Title) %>% 
+  tally()
+  
+nfl2 %>% 
+  group_by(Client.Program.Title, Zip) %>% 
+  tally()
+
+nfl2 %>% 
+  group_by(Ethnicity) %>% 
+  tally()
+
+nfl2 %>% 
+  group_by(QuestionID, Question) %>% 
+  tally()
+
+nfl2 <- nfl2 %>% 
+  group_by(ClientID, FamilyID) %>% 
+  mutate(income = ifelse(QuestionID==10, Answer, NA)) %>% 
+  ungroup()
+
+
+nfl2 %>% 
+  group_by(Question) %>% 
+  tally()
+
+nfl4 %>% 
+  group_by(X01.1..1.Attention.Maintenance ) %>% 
+  tally()
+
+
+
+```
+
+```{r graphs, echo = FALSE}
+
+nfl2 %>% 
+  filter(QuestionID=="10") %>% 
+  group_by(Answer, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Answer, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  coord_flip() +
+  ggtitle("Income by Year")
+
+nfl3 %>% 
+  filter(Year!=1978) %>% 
+  filter(QuestionID=="517") %>% 
+  group_by(Answer, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Answer, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  coord_flip() +
+  ggtitle("Income by Year")
+
+
+nfl2 %>% 
+  group_by(Ethnicity, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Ethnicity, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  coord_flip() +
+  ggtitle("Ethnicity by Year")
+
+nfl3 %>% 
+  filter(Year!=1978) %>% 
+  group_by(Ethnicity, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Ethnicity, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  coord_flip() +
+  ggtitle("Ethnicity by Year")
+
+nfl2 %>% 
+  group_by(Language, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Language, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  coord_flip() +
+  ggtitle("Language by Year")
+
+nfl2 %>% 
+  group_by(Gender_, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Gender_, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  ggtitle("Gender by Year")
+
+nfl2 %>% 
+  group_by(Gender_, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Gender_, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  ggtitle("Gender by Year")
+
+nfl3 %>% 
+  filter(Year!=1978) %>% 
+  group_by(Gender_, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Gender_, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  ggtitle("Gender by Year")
+
+nfl2 %>% 
+  filter(QuestionID=="13") %>% 
+  group_by(Answer, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Answer, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  coord_flip() +
+  ggtitle("Is there an expectant mother in the home?")
+
+nfl2 %>% 
+  filter(QuestionID=="14") %>% 
+  group_by(Answer, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Answer, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  coord_flip() +
+  ggtitle("Where does your family currently live?")
+
+nfl2 %>% 
+  filter(QuestionID=="14") %>% 
+  group_by(Answer, Year) %>% 
+  summarise(count = n()) %>% 
+  mutate(total=count) %>%
+  ggplot(aes(x = Answer, y = total)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ Year, nrow = 2)+
+  guides(fill=guide_legend(title = NULL))+
+  coord_flip() +
+  ggtitle("Where does your family currently live?")
+  
+  nfl2 %>% 
+    filter(QuestionID=="15") %>% 
+    group_by(Answer, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Answer, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("What is your current employment status?")
+  
+  nfl3 %>% 
+    filter(Year!=1978) %>% 
+    filter(QuestionID=="400") %>% 
+    group_by(Answer, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Answer, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("What is your current employment status?")
+  
+   nfl2 %>% 
+    filter(QuestionID=="16") %>% 
+    group_by(Answer, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Answer, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("What is the marital status of the adults?")
+   
+  nfl3 %>% 
+    filter(Year!=1978) %>% 
+    filter(QuestionID=="401") %>% 
+    group_by(Answer, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Answer, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("What is the marital status of the adults?")
+  
+  nfl3 %>% 
+    filter(Year!=1978) %>% 
+    filter(QuestionID=="407") %>% 
+    group_by(Answer, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Answer, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("Are You a Single Parent?")
+    
+  nfl3 %>% 
+    filter(Year!=1978) %>% 
+    filter(QuestionID=="408") %>% 
+    group_by(Answer, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Answer, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("Family Memeber")
+  
+  
+  nfl2 %>% 
+    filter(QuestionID=="515") %>% 
+    group_by(Answer, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Answer, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("What is your highest level of education?")
+  
+  nfl2 %>% 
+    filter(QuestionID=="516") %>% 
+    group_by(Answer, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Answer, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("Does anyone in your household smoke?")
+
+  nfl2 %>% 
+    filter(QuestionID=="916") %>% 
+    group_by(Answer, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Answer, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("Do all family members in your home have health coverage?")
+  
+   nfl2 %>% 
+    group_by(Agency, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Agency, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("Enrollees by Agency")
+   
+  nfl3 %>% 
+    filter(Year!=1978) %>% 
+    group_by(Agency, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Agency, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("Enrollees by Agency")
+   
+  nfl2 %>% 
+    group_by(Client.Program.Title, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Client.Program.Title, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("Enrollees by NfL")
+
+  nfl3 %>% 
+    filter(Year!=1978) %>% 
+    group_by(Client.Program.Title, Year) %>% 
+    summarise(count = n()) %>% 
+    mutate(total=count) %>%
+    ggplot(aes(x = Client.Program.Title, y = total)) + 
+    geom_bar(stat = "identity") + 
+    facet_wrap(~ Year, nrow = 2)+
+    guides(fill=guide_legend(title = NULL))+
+    coord_flip() +
+    ggtitle("Enrollees by NfL")
+
+```

@@ -1,0 +1,239 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+library(data.table)
+library(tidyverse)
+library(acs)
+library(stringr)
+library(dplyr)
+library(leaflet)
+library(ggplot2)
+library(tidyr)
+library(ggmap)
+library(spatialEco)
+library(tigris)
+
+
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(cache = FALSE)
+knitr::opts_chunk$set(dpi = 150)
+knitr::opts_chunk$set(message = T) #Use this to suppress all messages from chunks for finalized report
+knitr::opts_chunk$set(warning = T) #Use this to suppress all warnings from chunks for finalized report
+
+# Sorenson Impact colors we use in ggplot
+SI_design <- list(color_1 = "#005060", color_medium = "#1A818F", color_light = "#25AFC1", color_grey = "#58585A", color_light_grey = "E6E7E8")
+
+# This will fill bar colors with Sorenson Impact colors and default to theme_minimal
+update_geom_defaults("bar", list(fill = SI_design$color_1))
+theme_set(theme_minimal())
+
+setwd("~/Google Drive/SI/DataScience/")
+knitr::opts_knit$set(root.dir = '~/Google Drive/SI/DataScience/SLCPreschoolStudy2017/')
+
+```
+
+      
+
+```{r}
+ 
+
+data <- read.csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/ConsultantDataFixed.csv")
+data <- data[1:84,]
+data$address <- paste(data$"Address..1.", data$"City", data$"State", data$"Zip", sep=" ")
+# Consultant_geocodes <- geocode(as.character(data$address))
+# 
+# ## weirdness
+# Consultant_geocodes <-  Consultant_geocodes %>% 
+#   slice(1:76) %>% 
+#   slice(-7:-8)
+
+Consultant_geocodes <- read_csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/consultant_geocodes.csv")
+
+
+Consultant_Supply <- merge(select(data,c(Site.Name,Total.supply..spaces.)),Consultant_geocodes, by="row.names",all.x=TRUE)
+Consultant_Need <- merge(select(data,c(Site.Name,Total.need)),Consultant_geocodes, by="row.names",all.x=TRUE)
+Consultant_Gap <- merge(select(data,c(Site.Name,Accumulated.Gap)),Consultant_geocodes, by="row.names",all.x=TRUE)
+## Run from here
+
+#write.csv(Consultant_Supply, "C:\\Users\\Dylan Wootton\\Desktop\\College\\Fall 2017\\Sorenson\\Data Science\\Ventura Preshool\\Preschool Project\\Updated_ConsultantData.csv")
+
+
+map <- get_map(location = "Ventura", zoom = 12)
+Consultant_Need <- setDT(Consultant_Need)
+Consultant_Gap <- setDT(Consultant_Gap)
+
+Consultant_Supply <- setDT(read.csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Updated_ConsultantData.csv", stringsAsFactors = FALSE))
+Consultant_Supply <- Consultant_Supply[1:74,]
+Consultant_Need <- Consultant_Need[1:74,]
+Consultant_Gap <- Consultant_Gap[1:74,]
+
+
+new_CS <- Consultant_Supply
+Consultant_Supply <-  new_CS
+
+new_CS <- Consultant_Need
+Consultant_Need <-  new_CS
+
+new_CS <- Consultant_Gap
+Consultant_Gap <-  new_CS
+
+##read in zipcode data because we need to add zip back in
+ zips <- read.csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/names and zipcodes.csv")
+
+ zips <- zips %>% 
+  slice(-7:-8)
+
+#put zipcode data back into each
+Consultant_Need <- Consultant_Need %>% 
+  mutate(Row.names = as.numeric(Row.names)) %>% 
+  arrange(Row.names)
+
+ Consultant_Need$zip <- zips$Zip
+
+Consultant_Supply <- Consultant_Supply  %>% 
+  mutate(Row.names = as.numeric(Row.names)) %>% 
+  arrange(Row.names)
+
+ Consultant_Supply$zip <- zips$Zip
+ 
+Consultant_Gap <- Consultant_Gap  %>% 
+  mutate(Row.names = as.numeric(Row.names)) %>% 
+  arrange(Row.names) 
+
+ Consultant_Gap$zip <- zips$Zip
+
+## make the zip dataframe into a vector
+zipdf <- zips %>%
+  select(Zip) %>%
+  distinct(Zip)
+
+zipvec <- as.vector(zipdf)
+
+###download the tract 
+#counties <- c(111) # FIPS for Ventura
+options(tigris_use_cache = TRUE)
+zipcodes <- zctas(cb = TRUE, starts_with = c("91", "93"))
+# zipcodes <- zctas(starts_with = c("91", "93"))
+# counties <- c(111) # FIPS for Ventura
+# tracts <- tracts(state = 'CA', county = c(111), cb=TRUE)
+
+ Consultant_geocodes <- Consultant_geocodes %>% 
+   na.exclude(lat)
+
+ xy <- Consultant_geocodes[,c(1, 2)]
+# 
+ spdf <- SpatialPointsDataFrame(coords = xy, data = Consultant_geocodes,
+                                proj4string = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 "))
+ 
+ new_df <- sp::over(spdf, zipcodes) 
+
+ new_df <- new_df %>% 
+   slice(1:76)
+ 
+ ## merge tracts onto consultant need
+Consultant_Need$zipcodes <- new_df$ZCTA5CE10
+Consultant_Need$AFFGEOID10 <- new_df$AFFGEOID10
+Consultant_Need$ALAND10 <- new_df$ALAND10
+Consultant_Need$AWATER10 <- new_df$AWATER10
+Consultant_Need$GEOID10 <- new_df$GEOID10
+
+# Consultant_Need_tract <- Consultant_Need %>%
+#   group_by(GEOID, tracts) %>% 
+#   summarize(total_need_by_tract = sum(Total.need), na.rm=TRUE)
+
+## merge tracts onto consultant supply file
+Consultant_Supply$tracts <- new_df$NAME
+Consultant_Supply$GEOID <- new_df$GEOID
+# 
+# Consultant_Supply_tract <- Consultant_Supply %>%
+#   group_by(GEOID, tracts) %>% 
+#   summarize(total_supply_by_tract = sum(Total.supply..spaces.), na.rm=TRUE)
+
+## merge tracts onto consultant gap file
+Consultant_Gap$tracts <- new_df$NAME
+Consultant_Gap$GEOID <- new_df$GEOID
+
+# Consultant_Gap_tract <- Consultant_Gap %>%
+#   group_by(GEOID, tracts) %>% 
+#   summarize(total_supply_by_tract = sum(Accumulated.Gap), na.rm=TRUE)
+#  
+
+consult_merged<- geo_join(zipcodes, Consultant_Need, "AFFGEOID10", "AFFGEOID10", how="inner")
+# we need to only include the salt lake county ids
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", consult_merged$ZCTA5CE10, "</b><br>", "Total Need by Zipcode: ", prettyNum(round(consult_merged$Total.need,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = consult_merged$Total.need
+)
+
+map33<-leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = consult_merged, 
+              fillColor = ~pal(Total.need), 
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7, 
+              weight = 1, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal, 
+            values = consult_merged$Total.need, 
+            position = "bottomright", 
+            title = "Total Need by Zipcode"#,
+            #labFormat = labelFormat(prefix = " ")
+           ) 
+map33
+
+
+
+
+
+# 
+datamat_supply <- Consultant_Supply[, list(Total.supply..spaces. = mean(Total.supply..spaces.)), by = c("latbin", "longbin" )]
+datamat_supply <- merge(setDT(expand.grid(latbin = xbreaks, longbin = ybreaks)), datamat_supply, by = c("latbin", "longbin"), all.x = TRUE, all.y = FALSE)
+datamat_supply[is.na(Total.supply..spaces.), ]$Total.supply..spaces. <- 0
+
+#
+datamat_need <- Consultant_Need[, list(Total.need = mean(Total.need)), by = c("latbin", "longbin" )]
+datamat_need <- merge(setDT(expand.grid(latbin = xbreaks, longbin = ybreaks)), datamat_need, by = c("latbin", "longbin"), all.x = TRUE, all.y = FALSE)
+datamat_need[is.na(Total.need), ]$Total.need <- 0
+
+#
+datamat_gap <- Consultant_Gap[, list(Accumulated.Gap = mean(Accumulated.Gap)), by = c("latbin", "longbin" )]
+datamat_gap <- merge(setDT(expand.grid(latbin = xbreaks, longbin = ybreaks)), datamat_gap, by = c("latbin", "longbin"), all.x = TRUE, all.y = FALSE)
+datamat_gap[is.na(Accumulated.Gap), ]$Accumulated.Gap <- 0
+
+library('leaflet.extras')
+map<-leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addHeatmap(datamat_supply$longbin, datamat_supply$latbin, minOpacity = 0, max = 1000, radius = 5,
+  blur = 10, cellSize = 10, intensity = datamat_supply$Total.supply..spaces., group = "Supply")%>%
+  addHeatmap(datamat_need$longbin, datamat_need$latbin, minOpacity = 0, max = 1000, radius = 5,
+  blur = 10, cellSize = 10, intensity = datamat_need$Total.need, group = "Need")%>%
+  addHeatmap(datamat_gap$longbin, datamat_gap$latbin, minOpacity = 0, max = 1000, radius = 5,
+  blur = 10,cellSize = 10, intensity = datamat_gap$Accumulated.Gap*(-1), group = "Gap")%>%
+  addLayersControl(baseGroups = c("CartoDB.Positron"),
+                   overlayGroups = c("Supply", "Need", "Gap"), 
+                   options = layersControlOptions(collapsed = FALSE))
+
+# To do: fix toggle, finish eligiblity table, fix heat map
+map
+```
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+

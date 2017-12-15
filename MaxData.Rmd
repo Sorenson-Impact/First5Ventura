@@ -1,0 +1,143 @@
+---
+title: "Project for Max"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+library(knitr)
+library(tidyverse)
+library(readxl)
+library(scales)
+library(forcats)
+library(lubridate)
+library(stringr)
+library(dplyr)
+library(ggthemes)
+
+max <- read_csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Data for Max/max.data4gwen.csv")
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  mutate(rank = rank(Assessment_Date)) 
+
+max %>% 
+  group_by(rank) %>% 
+  tally()
+
+max <- max %>% 
+  mutate(rank = ifelse(rank==1.5, 1, rank))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(preATL_sum = ifelse(rank==1, ATL_sum, 0)) %>% 
+  mutate(preATL_sum = max(preATL_sum)) 
+  
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(preSED_sum = ifelse(rank==1, SED_sum, 0)) %>% 
+  mutate(preSED_sum = max(preSED_sum)) 
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(preLLD_sum = ifelse(rank==1, LLD_sum, 0)) %>% 
+  mutate(preLLD_sum = max(preLLD_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(preELD_sum = ifelse(rank==1, ELD_sum, 0)) %>% 
+  mutate(preELD_sum = max(preELD_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(preCOG_sum = ifelse(rank==1, COG_sum, 0)) %>% 
+  mutate(preCOG_sum = max(preCOG_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(postATL_sum = ifelse(rank==2, ATL_sum, 0)) %>% 
+  mutate(postATL_sum = max(postATL_sum)) 
+  
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(postSED_sum = ifelse(rank==2, SED_sum, 0)) %>% 
+  mutate(postSED_sum = max(postSED_sum)) 
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(postLLD_sum = ifelse(rank==2, LLD_sum, 0)) %>% 
+  mutate(postLLD_sum = max(postLLD_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(postELD_sum = ifelse(rank==2, ELD_sum, 0)) %>% 
+  mutate(postELD_sum = max(postELD_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(postCOG_sum = ifelse(rank==2, COG_sum, 0)) %>% 
+  mutate(postCOG_sum = max(postCOG_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(prepd_sum = ifelse(rank==1, PD_sum, 0)) %>% 
+  mutate(prepd_sum = max(prepd_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(postpd_sum = ifelse(rank==2, PD_sum, 0)) %>% 
+  mutate(postpd_sum = max(postpd_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(prehss_sum = ifelse(rank==1, HSS_sum, 0)) %>% 
+  mutate(prehss_sum = max(prehss_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(posthss_sum = ifelse(rank==2, HSS_sum, 0)) %>% 
+  mutate(posthss_sum = max(posthss_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(preVPA_sum = ifelse(rank==1, VPA_sum, 0)) %>% 
+  mutate(preVPA_sum = max(preVPA_sum))
+
+max <- max %>% 
+  group_by(ClientID) %>% 
+  filter(rank<=2) %>% 
+  mutate(postVPA_sum = ifelse(rank==2, VPA_sum, 0)) %>% 
+  mutate(postVPA_sum = max(postVPA_sum))
+
+
+max <- max %>% 
+  filter(rank==1)
+
+write.csv(max, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Data for Max/max.data4max.csv")
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
