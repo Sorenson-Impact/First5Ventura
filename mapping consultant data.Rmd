@@ -116,7 +116,7 @@ zipdf <- zips %>%
 
 zipvec <- as.vector(zipdf)
 
-###download the tract 
+###download the zipcode 
 #counties <- c(111) # FIPS for Ventura
 options(tigris_use_cache = TRUE)
 zipcodes <- zctas(cb = TRUE, starts_with = c("91", "93"))
