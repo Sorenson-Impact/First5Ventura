@@ -79,8 +79,7 @@ family_intake <- family_intake %>%
 family_intake <- family_intake %>% 
   group_by(`Program Title`, ClientID, Zip, school_year) %>% 
   mutate(count = n()) %>% 
-  mutate(rank = rank(`Enrollment Date`)) %>% 
-  filter(rank==1)
+  mutate(rank = rank(`Enrollment Date`)) 
 
 family_intake <- family_intake %>% 
     mutate(Ethnicity= (fct_collapse(Ethnicity, "Other" = c("01. Alaskan Native / American Indian", "02. Asian", "03. Black / African American", "05. Vietnamese", "06. Pacific Islander", "08. Multiracial", "09. Other", "10. Don't know/Declined")))) 
@@ -105,8 +104,79 @@ family_intaketest %>%
   group_by(rank) %>% 
   summarise(count = n())
 
+notpre <- c("01: Preschool (Marina West)", "Preschool (Berylwood)", "Preschool (Hathaway School)", "Preschool (Sierra Linda)", "Preschool {Hueneme Head Start}", "Preschool {Larsen Head Start}", "Preschool {Little Vikings Head Start}", "Preschool {Parkview Head Start}")
+`%notin%` <- Negate(`%in%`)
+
+preschool <- preschool %>% 
+  filter(`Service Modality` %notin% notpre)
+
+preschool %>% 
+  group_by(`Service Modality`) %>% 
+  count(`Service Modality`)
+
+preschool <- preschool %>% ungroup %>% mutate(dataset = "preschool") %>% mutate(Zip = as.integer(Zip))
+family_intake <- family_intake %>% ungroup %>%  mutate(dataset = "family") %>% mutate(Zip = as.integer(Zip))
+
+
+mergedpreschool <- left_join(preschool, family_intake, by = c("ClientID" = "ClientID", "FamilyID" = "FamilyID"))
+mergedpreschool <- mergedpreschool %>% group_by(ClientID) %>%  mutate(rank = rank(ClientID))
+
+mergedpreschool2 <- bind_rows(preschool, family_intake)
+
+mergedpreschool2 <- mergedpreschool2 %>% group_by(ClientID) %>% mutate(rank = rank(ClientID))
+
+mergedpreschool2 %>% ungroup() %>% count(dataset, rank)
+
+mergedpreschool2 %>% 
+  group_by(dataset, `01-1: 1 What is your highest level of education`) %>% 
+  count(`01-1: 1 What is your highest level of education`)
+
+mergedpreschool2 %>% 
+  group_by(ClientID) %>% 
+  group_by(`01-1: 1 What is your highest level of education`) %>% 
+  count()
+
+
+mergedcollapse <- mergedpreschool2 %>%
+  filter(school_year>=2014) %>% 
+  group_by(ClientID) %>%
+  summarise(education=paste(`01-1: 1 What is your highest level of education`, collapse=' '), school_year = paste(school_year, collapse = " "), school_year = paste(school_year, collapse = " "), ProgramTitle = paste(`Program Title`, collapse = " "), dob = paste(DOB, collapse = " "), gender = paste(Gender_, collapse = " "), sped = paste(`Special Needs`, collapse = " "), ethnicity = paste(Ethnicity, collapse = " "), language = paste(Language, collapse = " "), city = paste(City, collapse = " "), zip = paste(Zip, collapse = " "), dataset = paste(dataset, collapse = " "), preschool = paste(`Service Modality`, collapse = " "), employ = paste(`01-2: 2 What is your current employment status?`, collapse = " "), income = paste(`01-4: 4 What was your total FAMILY INCOME in the last 12 months?`, collapse = " "), householdmems = paste(`01-7: 7 How many family members live in your household? (incl_ a`, collapse = " ")) 
+
+mergedcollapse %>% 
+  count(dataset) 
+
+
+
+mergedcollapse <- mergedcollapse %>% 
+  mutate(datasetsimple = ifelse(grepl("preschool family", dataset), "preschool family",
+                         ifelse(grepl("family", dataset), "family", 
+                         ifelse(grepl("preschool", dataset), "preschool", 
+                          "other"))))
+
+mergedcollapse %>% 
+  count(datasetsimple)
+    
+```
+#The following section includes demographics for 2014 and onward for preschoolers and their families that appear in both the preschool file and the family_intake file. 
+
+```{r make tables of overlap, echo=FALSE}
+
+mergedpreschool %>% 
+  ungroup %>% 
+  count(rank)
+
+mergedpreschool %>% 
+  filter(school_year>=2014) %>% 
+  filter(!is.na(`01-4: 4 What was your total FAMILY INCOME in the last 12 months?`)) %>% 
+  group_by(`Service Modality`) %>%
+  count(`Service Modality`) 
+
+
 
 ```
+
+
+
 
 ###The following section includes demographic tables by year, with the year starting at 2014. 
 
@@ -392,10 +462,22 @@ family_intake %>%
   
 
 
-# ##make some tables
-# preschool %>% 
-#   group_by(Agency, school_year) %>% 
-#   summarise(count = n())
+##make some tables
+preschool %>%
+  group_by(`Program Title`) %>%
+  summarise(count = n()) %>% 
+  kable()
+
+import_member %>%
+  group_by(`Program Title`) %>%
+  summarise(count = n()) %>% 
+  kable()
+
+preschool %>%
+  group_by(`Service Modality`) %>%
+  summarise(count = n()) %>% 
+  kable()
+
 # 
 # preschool %>% 
 #   group_by(school_year, Ethnicity) %>% 
