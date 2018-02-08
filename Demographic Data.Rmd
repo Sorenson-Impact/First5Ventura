@@ -41,24 +41,24 @@ ziptocity <- read_csv("~/Google Drive/SI/DataScience/Side projects/Ventura Presc
 ```{r clean and merge, echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
 
 ## get the dates in the same format
-preschool$`Service StartDate` <- as.Date(preschool$`Service StartDate`, "%Y/%m/%d")
-preschool$`Service EndDate` <- as.Date(preschool$`Service EndDate`, "%Y/%m/%d")
+preschool$`Enrollment Date_` <- as.Date(preschool$`Enrollment Date_`, "%m/%d/%Y")
+preschool$`Exited Date` <- as.Date(preschool$`Exited Date`, "%m/%d/%Y")
 
 ##I want to know the year of enrollment, so i'm creating a "year" variable
 preschool <- preschool %>% 
-  mutate(school_year = year(`Service StartDate`)) 
+  mutate(school_year = year(`Enrollment Date_`)) 
 
 ## this dataset has a bunch of repeat rows. I want to filter those out. 
-preschool <- preschool %>% 
-  group_by(`Program Title`, ClientID, Zip, school_year) %>% 
-  mutate(count = n()) %>% 
-  mutate(rank = rank(`Service StartDate`)) %>% 
-  filter(rank==1)
+# preschool <- preschool %>% 
+#   group_by(`Program Title`, ClientID, Zip, school_year) %>% 
+#   mutate(count = n()) %>% 
+#   mutate(rank = rank(`Enrollment Date_`)) %>% 
+#   filter(rank==1)
 
 preschool <- preschool %>% 
   group_by(`Program Title`, ClientID, Zip, school_year) %>% 
   mutate(count = n()) %>% 
-  mutate(rank = rank(`Service StartDate`)) 
+  mutate(rank = rank(`Enrollment Date_`)) 
 
 ### collapse all ethnicities besides white/latino/other
 preschool <- preschool %>% 
@@ -164,10 +164,10 @@ mergedpreschool %>%
 mergedpreschool %>% 
   filter(count==6) %>% 
   print()
+```
 
-# unique_rows <- !duplicated(mergedpreschool[c("ClientID.x","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems")])
-
-distinct_rows <- mergedpreschool %>% select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "Gender_.x", "Special Needs", "Zip.x", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems") %>% distinct()
+```{r deduplicate, echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
+distinct_rows <- mergedpreschool %>% select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Gender_.x", "Special Needs", "Zip.x", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems", "school_year.y") %>% distinct()
 
 distinct_rows <- distinct_rows %>% 
   group_by(school_year.x, ClientID.x) %>% 
@@ -196,7 +196,7 @@ distinct_rows %>%
   count(rank)
 
 distinct_rows <- distinct_rows %>% 
-  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "wherelive", "employment", "maritalstatus", "income", "householdmems", "Gender_.x", "Special Needs", "Zip.x") %>% distinct()
+  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "wherelive", "employment", "maritalstatus", "income", "householdmems", "Gender_.x", "Special Needs", "Zip.x", "school_year.y") %>% distinct()
 
 distinct_rows <- distinct_rows %>% 
   group_by(school_year.x, ClientID.x) %>% 
@@ -221,19 +221,28 @@ distinct_rows %>%
   count(rank)
 
 distinct_rows <- distinct_rows %>% 
-  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "income", "householdmems", "Gender_.x", "Special Needs", "Zip.x") %>% distinct()
+  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "income", "householdmems", "Gender_.x", "Special Needs", "Zip.x", "school_year.y") %>% distinct()
 
 distinct_rows <- distinct_rows %>% 
   group_by(school_year.x, ClientID.x) %>% 
   mutate(count = n()) %>% 
   mutate(rank = rank(`school_year.x`))
 
-distinct_rows %>% 
-  ungroup() %>% 
-  count(count)
+distinct_rows <- distinct_rows %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.y`))
 
 distinct_rows <- distinct_rows %>% 
-  filter(count==1) 
+  filter(rank==1)
+
+distinct_rows <- distinct_rows %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+# distinct_rows <- distinct_rows %>% 
+#   filter(count==1) 
 
 distinct_rows %>% 
   ungroup() %>% 
@@ -256,7 +265,7 @@ mergedpreschool2 <- mergedpreschool2 %>%
 
 # unique_rows <- !duplicated(mergedpreschool[c("ClientID.x","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems")])
 
-distinct_rows2 <- mergedpreschool2 %>% select("ClientID","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "Gender_.x", "Special Needs", "Zip.x", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems") %>% distinct()
+distinct_rows2 <- mergedpreschool2 %>% select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Gender_.x", "Special Needs", "Zip.x", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems", "school_year.y") %>% distinct()
 
 distinct_rows2 <- distinct_rows2 %>% 
   group_by(school_year.x, ClientID) %>% 
@@ -277,7 +286,7 @@ distinct_rows2 <- distinct_rows2 %>%
   mutate(rank = rank(`school_year.x`))
 
 distinct_rows2 <- distinct_rows2 %>% 
-  select("ClientID","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "wherelive", "employment", "maritalstatus", "income", "householdmems", "Gender_.x", "Special Needs", "Zip.x") %>% distinct()
+  select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "wherelive", "employment", "maritalstatus", "income", "householdmems", "Gender_.x", "Special Needs", "Zip.x", "school_year.y") %>% distinct()
 
 distinct_rows2 <- distinct_rows2 %>% 
   group_by(school_year.x, ClientID) %>% 
@@ -294,19 +303,19 @@ distinct_rows2 <- distinct_rows2 %>%
   mutate(rank = rank(`school_year.x`))
 
 distinct_rows2 <- distinct_rows2 %>% 
-  select("ClientID","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "income", "householdmems", "Gender_.x", "Special Needs", "Zip.x") %>% distinct()
+  select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "income", "householdmems", "Gender_.x", "Special Needs", "Zip.x", "school_year.y") %>% distinct()
 
 distinct_rows2 <- distinct_rows2 %>% 
   group_by(school_year.x, ClientID) %>% 
   mutate(count = n()) %>% 
-  mutate(rank = rank(`school_year.x`))
+  mutate(rank = rank(`school_year.y`))
 
 distinct_rows2 %>% 
   ungroup() %>% 
-  count(count)
+  count(rank)
 
 distinct_rows2 <- distinct_rows2 %>% 
-  filter(count==1) 
+  filter(rank==1) 
 
 distinct_rows2 %>% 
   ungroup() %>% 
@@ -328,13 +337,39 @@ distinct_rowstotal %>%
 
 distinct_rowstotal <- distinct_rowstotal %>% 
   rename(school_year = school_year.x) %>% 
-  rename(Ethnicity = Ethnicity.y) %>% 
-  rename(Language = Language.y) %>% 
+  rename(Ethnicity = Ethnicity.x) %>% 
+  rename(Language = Language.x) %>% 
   rename(Gender = Gender_.x) %>% 
   rename(Zip = Zip.x)
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  group_by(ClientID) %>% 
+  mutate(repeats = n()) %>% 
+  mutate(rank = rank(`school_year`))
+
+distinct_rowstotal %>% 
+  ungroup() %>% 
+  count(repeats)
+
+
 ```
 
 ```{r merged and deduplicated data, echo=FALSE}
+
+distinct_rowstotal %>% 
+   group_by(school_year) %>%
+  summarise(count = n()) %>% 
+  mutate(perc=(count/sum(count)*100)) %>% 
+   kable()
+
+distinct_rowstotal %>% 
+   group_by(school_year) %>%
+  summarise(count = n()) %>% 
+  ggplot(aes(x=school_year, y=count)) +
+  geom_col()+
+  labs(x="School Year", y="Total Number") +
+  ggtitle("Total Number of Preschoolers by School Year")
+
 
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
@@ -361,450 +396,158 @@ distinct_rowstotal %>%
   ggplot(aes(x=Ethnicity, y=perc)) +
   geom_col()+
   labs(x="Ethnicity", y="Percent") +
-  ggtitle("Ethnicity")
+  ggtitle("Ethnicity by Preschoolers")
 
 
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
-    filter(!is.na(Language)) %>% 
+  filter(!is.na(Language)) %>% 
   group_by(Language) %>%
   summarise(count = n()) %>% 
   mutate(perc=(count/sum(count)*100)) %>% 
    kable()
 
-family_intake %>% 
+distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
-  group_by(`01-1: 1 What is your highest level of education`) %>% 
+  filter(!is.na(Language)) %>% 
+  group_by(school_year, Language) %>%
   summarise(count = n()) %>% 
   mutate(perc=(count/sum(count)*100)) %>% 
-  ggplot(aes(x=`01-1: 1 What is your highest level of education`, y=perc)) +
+   kable()
+
+distinct_rowstotal %>% 
+  filter(school_year>=2014) %>% 
+  filter(!is.na(Language)) %>% 
+  group_by(Language) %>%
+  summarise(count = n()) %>% 
+  mutate(perc=(count/sum(count)*100)) %>% 
+  ggplot(aes(x=Language, y=perc)) +
   geom_col()+
-  ggtitle("Education by Year")
+  labs(x="Language", y="Percent") +
+  ggtitle("Language Spoken by Preschoolers")
 
-family_intake %>% 
+distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
-  group_by(`01-1: 1 What is your highest level of education`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(`01-2: 2 What is your current employment status?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(`01-4: 4 What was your total FAMILY INCOME in the last 12 months?`) %>% 
+  filter(!is.na(income)) %>% 
+  group_by(income) %>%
   summarise(count = n()) %>% 
   mutate(perc=(count/sum(count)*100)) %>% 
    kable()
 
-family_intake %>% 
+distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
-  group_by(`01-3: 3 What is the marital status of the adults?`) %>% 
+  filter(!is.na(income)) %>% 
+  group_by(school_year, income) %>%
   summarise(count = n()) %>% 
   mutate(perc=(count/sum(count)*100)) %>% 
    kable()
 
-family_intake %>% 
+distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
+  filter(!is.na(income)) %>% 
+  group_by(income) %>%
+  summarise(count = n()) %>% 
+  mutate(perc=(count/sum(count)*100)) %>% 
+  ggplot(aes(x=income, y=perc)) +
+  geom_col()+
+  labs(x="income", y="Percent") +
+  ggtitle("Family Income")
+
+distinct_rowstotal %>% 
+  filter(school_year>=2014) %>% 
+  filter(!is.na(householdmems)) %>% 
+  ungroup %>% 
+  mutate(householdmems = as.numeric(householdmems)) %>% 
+  summarise(meanHouseholdMembers = mean(householdmems, na.rm = TRUE)) %>% 
+   kable()
+
+distinct_rowstotal %>% 
+  filter(school_year>=2014) %>% 
+  filter(!is.na(householdmems)) %>% 
   group_by(school_year) %>% 
-  mutate(`01-7: 7 How many family members live in your household? (incl_ a` = as.numeric(`01-7: 7 How many family members live in your household? (incl_ a`)) %>% 
-  summarise(meanHouseholdMembers = mean(`01-7: 7 How many family members live in your household? (incl_ a`, na.rm = TRUE)) %>% 
+  mutate(householdmems = as.numeric(householdmems)) %>% 
+  summarise(meanHouseholdMembers = mean(householdmems, na.rm = TRUE)) %>% 
    kable()
+
+distinct_rowstotal %>% 
+  filter(school_year>=2014) %>% 
+  filter(!is.na(householdmems)) %>% 
+  group_by(school_year) %>% 
+  mutate(householdmems = as.numeric(householdmems)) %>% 
+  summarise(meanHouseholdMembers = mean(householdmems, na.rm = TRUE)) %>% 
+  ggplot(aes(x=school_year, y=meanHouseholdMembers)) +
+  geom_col()+
+  labs(x="School Year", y="Mean Household Members") +
+  ggtitle("Mean Household Members by School Year")
+
+distinct_rowstotal %>% 
+  filter(school_year>=2014) %>% 
+  filter(!is.na(Gender)) %>% 
+  group_by(Gender) %>%
+  summarise(count = n()) %>% 
+  mutate(perc=(count/sum(count)*100)) %>% 
+   kable()
+
+distinct_rowstotal %>% 
+  filter(school_year>=2014) %>% 
+  filter(!is.na(Gender)) %>% 
+  group_by(school_year, Gender) %>%
+  summarise(count = n()) %>% 
+  mutate(perc=(count/sum(count)*100)) %>% 
+   kable()
+
+distinct_rowstotal %>% 
+  filter(school_year>=2014) %>% 
+  filter(!is.na(Gender)) %>% 
+  group_by(Gender) %>%
+  summarise(count = n()) %>% 
+  mutate(perc=(count/sum(count)*100)) %>% 
+  ggplot(aes(x=Gender, y=perc)) +
+  geom_col()+
+  labs(x="Gender", y="Percent") +
+  ggtitle("Gender of Preschoolers")
+
+
 
 ```
 
 ```{r, include=FALSE}
 ##below is my attempt to collapse, rather than merge
-mergedpreschool2 <- bind_rows(preschool, family_intake)
-
-mergedpreschool2 <- mergedpreschool2 %>% group_by(ClientID) %>% mutate(rank = rank(ClientID))
-
-mergedpreschool2 %>% ungroup() %>% count(dataset, rank)
-
-mergedpreschool2 %>% 
-  group_by(dataset, `01-1: 1 What is your highest level of education`) %>% 
-  count(`01-1: 1 What is your highest level of education`)
-
-mergedpreschool2 %>% 
-  group_by(ClientID) %>% 
-  group_by(`01-1: 1 What is your highest level of education`) %>% 
-  count()
-
-mergedcollapse <- mergedpreschool2 %>%
-  filter(school_year>=2014) %>% 
-  group_by(ClientID) %>%
-  summarise(education=paste(`01-1: 1 What is your highest level of education`, collapse=' '), school_year = paste(school_year, collapse = " "), school_year = paste(school_year, collapse = " "), ProgramTitle = paste(`Program Title`, collapse = " "), dob = paste(DOB, collapse = " "), gender = paste(Gender_, collapse = " "), sped = paste(`Special Needs`, collapse = " "), ethnicity = paste(Ethnicity, collapse = " "), language = paste(Language, collapse = " "), city = paste(City, collapse = " "), zip = paste(Zip, collapse = " "), dataset = paste(dataset, collapse = " "), preschool = paste(`Service Modality`, collapse = " "), employ = paste(`01-2: 2 What is your current employment status?`, collapse = " "), income = paste(`01-4: 4 What was your total FAMILY INCOME in the last 12 months?`, collapse = " "), householdmems = paste(`01-7: 7 How many family members live in your household? (incl_ a`, collapse = " ")) 
-
-mergedcollapse %>% 
-  count(dataset) 
-
-
-mergedcollapse <- mergedcollapse %>% 
-  mutate(datasetsimple = ifelse(grepl("preschool family", dataset), "preschool family",
-                         ifelse(grepl("family", dataset), "family", 
-                         ifelse(grepl("preschool", dataset), "preschool", 
-                          "other"))))
-
-mergedcollapse %>% 
-  count(education)
-    
-```
-#The following section includes demographics for 2014 and onward for preschoolers and their families that appear in both the preschool file and the family_intake file. 
-
-```{r make tables of overlap, echo=FALSE, include=FALSE}
-
-
-mergedpreschool %>% 
-  filter(school_year>=2014) %>% 
-  filter(!is.na(`01-4: 4 What was your total FAMILY INCOME in the last 12 months?`)) %>% 
-  group_by(`Service Modality`) %>%
-  count(`Service Modality`) 
-
-
-
-```
-
-
-
-
-###The following section includes demographic tables by year, with the year starting at 2014. 
-
-```{r make tables by year, echo=FALSE, include=FALSE}
-##make some tables
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(`Program Title`, `Contract Number`) %>%
-  summarise(count = n()) %>% 
-   kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year, Ethnicity) %>%
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year, Ethnicity) %>%
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  ggplot(aes(x=school_year, y=perc, fill = Ethnicity), position = "dodge") +
-  geom_col(position = "dodge")+
-  labs(x="School Year", y="Percent") +
-  ggtitle("Ethnicity by Year")
-  
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year, Language) %>%
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year, Language) %>%
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  ggplot(aes(x=school_year, y=perc, fill = Language), position = "dodge") +
-  geom_col(position = "dodge")+
-  labs(x="School Year", y="Percent") +
-  ggtitle("Language by Year")
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year, `01-1: 1 What is your highest level of education`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year, `01-2: 2 What is your current employment status?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year, `01-4: 4 What was your total FAMILY INCOME in the last 12 months?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year,`01-3: 3 What is the marital status of the adults?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year) %>% 
-  mutate(`01-7: 7 How many family members live in your household? (incl_ a` = as.numeric(`01-7: 7 How many family members live in your household? (incl_ a`)) %>% 
-  summarise(meanHouseholdMembers = mean(`01-7: 7 How many family members live in your household? (incl_ a`, na.rm = TRUE)) %>% 
-   kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year) %>% 
-  mutate(`01-7: 7 How many family members live in your household? (incl_ a` = as.numeric(`01-7: 7 How many family members live in your household? (incl_ a`)) %>% 
-  summarise(meanHouseholdMembers = mean(`01-7: 7 How many family members live in your household? (incl_ a`, na.rm = TRUE)) %>% 
-  ggplot(aes(x=school_year, y=meanHouseholdMembers)) +
-  geom_col()+
-  labs(x="School Year") +
-  ggtitle("Household Members by Year")
-```
-
-###The next section includes tables of demographics for the total population (from 2014 onward). 
-
-
-```{r tables by total population, echo=FALSE, include=FALSE}
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(Ethnicity) %>%
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(Language) %>%
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(`01-1: 1 What is your highest level of education`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  ggplot(aes(x=`01-1: 1 What is your highest level of education`, y=perc)) +
-  geom_col()+
-  ggtitle("Education by Year")
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(`01-1: 1 What is your highest level of education`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(`01-2: 2 What is your current employment status?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(`01-4: 4 What was your total FAMILY INCOME in the last 12 months?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(`01-3: 3 What is the marital status of the adults?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  filter(school_year>=2014) %>% 
-  group_by(school_year) %>% 
-  mutate(`01-7: 7 How many family members live in your household? (incl_ a` = as.numeric(`01-7: 7 How many family members live in your household? (incl_ a`)) %>% 
-  summarise(meanHouseholdMembers = mean(`01-7: 7 How many family members live in your household? (incl_ a`, na.rm = TRUE)) %>% 
-   kable()
-```
-
-###Below are demographic tables by city. 
-
-
-```{r tables by city, echo=FALSE, include=FALSE}
-
-family_intaketest %>% 
-  filter(school_year>=2014) %>% 
-  group_by(City, Ethnicity) %>%
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intaketest %>% 
-  filter(school_year>=2014) %>% 
-  group_by(City, Language) %>%
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-family_intaketest %>% 
-  filter(school_year>=2014) %>% 
-  group_by(City, `01-1: 1 What is your highest level of education`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-family_intaketest %>% 
-  filter(school_year>=2014) %>% 
-  group_by(City, `01-2: 2 What is your current employment status?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-  kable()
-
-family_intaketest %>% 
-  filter(school_year>=2014) %>% 
-  group_by(City, `01-4: 4 What was your total FAMILY INCOME in the last 12 months?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intaketest %>% 
-  filter(school_year>=2014) %>% 
-  group_by(City,`01-3: 3 What is the marital status of the adults?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intaketest %>% 
-  filter(school_year>=2014) %>% 
-  group_by(City) %>% 
-  mutate(`01-7: 7 How many family members live in your household? (incl_ a` = as.numeric(`01-7: 7 How many family members live in your household? (incl_ a`)) %>% 
-  summarise(meanHouseholdMembers = mean(`01-7: 7 How many family members live in your household? (incl_ a`, na.rm = TRUE)) %>% 
-   kable()
-
-
-```
-
-
-```{r old tables, include=FALSE}
-family_intake %>% 
-  group_by(Zip) %>% 
-  summarise(count = n())
-
-family_intake %>% 
-  group_by(Zip, Ethnicity) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>%  
-   kable()
-
-family_intake %>% 
-  group_by(Zip, Language) %>%
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  group_by(Zip, `01-1: 1 What is your highest level of education`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  group_by(Zip, `01-2: 2 What is your current employment status?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  group_by(Zip, `01-4: 4 What was your total FAMILY INCOME in the last 12 months?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  group_by(Zip, `01-4: 4 What was your total FAMILY INCOME in the last 12 months?`) %>% 
-  filter(Ethnicity=="07. White") %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  group_by(Zip, `01-4: 4 What was your total FAMILY INCOME in the last 12 months?`) %>% 
-  filter(Ethnicity=="04. Hispanic / Latino") %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  group_by(Zip, `01-3: 3 What is the marital status of the adults?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  group_by(Zip, `01-3: 3 What is the marital status of the adults?`, `01-4: 4 What was your total FAMILY INCOME in the last 12 months?`) %>% 
-  summarise(count = n()) %>% 
-  mutate(perc=(count/sum(count)*100)) %>% 
-   kable()
-
-family_intake %>% 
-  group_by(Zip) %>% 
-  mutate(`01-7: 7 How many family members live in your household? (incl_ a` = as.numeric(`01-7: 7 How many family members live in your household? (incl_ a`)) %>% 
-  summarise(meanHouseholdMembers = mean(`01-7: 7 How many family members live in your household? (incl_ a`, na.rm = TRUE)) %>% 
-   kable()
-  
-
-
-##make some tables
-preschool %>%
-  group_by(`Program Title`) %>%
-  summarise(count = n()) %>% 
-  kable()
-
-import_member %>%
-  group_by(`Program Title`) %>%
-  summarise(count = n()) %>% 
-  kable()
-
-preschool %>%
-  group_by(`Service Modality`) %>%
-  summarise(count = n()) %>% 
-  kable()
-
+# mergedpreschool2 <- bind_rows(preschool, family_intake)
 # 
-# preschool %>% 
-#   group_by(school_year, Ethnicity) %>% 
-#   summarise(count = n()) %>% 
-#   mutate(perc=(count/sum(count)*100)) 
+# mergedpreschool2 <- mergedpreschool2 %>% group_by(ClientID) %>% mutate(rank = rank(ClientID))
 # 
-# preschool %>% 
-#   group_by(Zip, Ethnicity) %>% 
-#   summarise(count = n()) %>% 
-#   mutate(perc=(count/sum(count)*100)) 
+# mergedpreschool2 %>% ungroup() %>% count(dataset, rank)
 # 
-# preschool %>% 
-#   group_by(school_year, Language) %>% 
-#   summarise(count = n()) %>% 
-#   mutate(perc=(count/sum(count)*100)) 
-#   
-# preschool %>% 
-#   group_by(Zip, Language) %>% 
-#   summarise(count = n()) %>% 
-#   mutate(perc=(count/sum(count)*100)) 
+# mergedpreschool2 %>% 
+#   group_by(dataset, `01-1: 1 What is your highest level of education`) %>% 
+#   count(`01-1: 1 What is your highest level of education`)
 # 
-# preschool %>% 
-#   group_by(school_year, `Special Needs`) %>% 
-#   summarise(count = n()) %>% 
-#   mutate(perc=(count/sum(count)*100)) 
+# mergedpreschool2 %>% 
+#   group_by(ClientID) %>% 
+#   group_by(`01-1: 1 What is your highest level of education`) %>% 
+#   count()
 # 
-# preschool %>% 
-#   group_by(Zip, `Special Needs`) %>% 
-#   summarise(count = n()) %>% 
-#   mutate(perc=(count/sum(count)*100)) 
-
+# mergedcollapse <- mergedpreschool2 %>%
+#   filter(school_year>=2014) %>% 
+#   group_by(ClientID) %>%
+#   summarise(education=paste(`01-1: 1 What is your highest level of education`, collapse=' '), school_year = paste(school_year, collapse = " "), school_year = paste(school_year, collapse = " "), ProgramTitle = paste(`Program Title`, collapse = " "), dob = paste(DOB, collapse = " "), gender = paste(Gender_, collapse = " "), sped = paste(`Special Needs`, collapse = " "), ethnicity = paste(Ethnicity, collapse = " "), language = paste(Language, collapse = " "), city = paste(City, collapse = " "), zip = paste(Zip, collapse = " "), dataset = paste(dataset, collapse = " "), preschool = paste(`Service Modality`, collapse = " "), employ = paste(`01-2: 2 What is your current employment status?`, collapse = " "), income = paste(`01-4: 4 What was your total FAMILY INCOME in the last 12 months?`, collapse = " "), householdmems = paste(`01-7: 7 How many family members live in your household? (incl_ a`, collapse = " ")) 
+# 
+# mergedcollapse %>% 
+#   count(dataset) 
+# 
+# 
+# mergedcollapse <- mergedcollapse %>% 
+#   mutate(datasetsimple = ifelse(grepl("preschool family", dataset), "preschool family",
+#                          ifelse(grepl("family", dataset), "family", 
+#                          ifelse(grepl("preschool", dataset), "preschool", 
+#                           "other"))))
+# 
+# mergedcollapse %>% 
+#   count(education)
+#     
 ```
+
 
 
 
