@@ -349,12 +349,65 @@ distinct_rowstotal <- distinct_rowstotal %>%
 
 distinct_rowstotal %>% 
   ungroup() %>% 
-  count(repeats)
+  count(householdmems)
+
+distinct_rowstotal <-  distinct_rowstotal %>%
+  mutate(income2 = ifelse(income=="Less than $10,000", 5000, 
+                   ifelse(income=="$10,000 less than $20,000", 15000, 
+                   ifelse(income=="$20,000 less than $30,000", 25000, 
+                   ifelse(income=="$30,000 less than $40,000", 35000, 
+                   ifelse(income=="$40,000 less than $50,000", 45000, 
+                   ifelse(income=="$50,000 less than $75,000", 62500, 
+                   ifelse(income=="$75,000 less than $100,000", 87500, 
+                   ifelse(income=="More than $100,000", 105000, NA)))))))))
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  mutate(fplguide = ifelse(householdmems==1, 12140, 
+                    ifelse(householdmems==2, 16460, 
+                    ifelse(householdmems==3, 20780, 
+                    ifelse(householdmems==4, 25100, 
+                    ifelse(householdmems==5, 29420, 
+                    ifelse(householdmems==6, 33740, 
+                    ifelse(householdmems==7, 38060, 
+                    ifelse(householdmems==8, 42380, 
+                    ifelse(householdmems==9, 46700, 
+                    ifelse(householdmems==10, 51020, 
+                    ifelse(householdmems==11, 55340, NA))))))))))))
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  mutate(fpl = (income2/fplguide)*100)
 
 
 ```
 
+```{r fpl and things, echo=FALSE}
+
+distinct_rowstotal %>% 
+  ungroup() %>% 
+  #group_by(Zip) %>% 
+  mutate(Zip = as.factor(Zip)) %>% 
+  #summarise(meanfpl = mean(fpl, na.rm = TRUE), medianfpl = median(fpl, na.rm = TRUE)) %>% 
+  ggplot(aes(x = Zip, y = fpl)) +
+  geom_point() +
+  geom_boxplot()
+
+meantable <- distinct_rowstotal %>% 
+  ungroup() %>% 
+  group_by(Zip) %>% 
+  #mutate(Zip = as.factor(Zip)) %>% 
+  summarise(meanfpl = mean(fpl, na.rm = TRUE), medianfpl = median(fpl, na.rm = TRUE), count = n()) 
+
+
+
+```
+
+
+
 ```{r merged and deduplicated data, echo=FALSE}
+
+meantable %>% 
+  arrange(meanfpl) %>% 
+  kable()
 
 distinct_rowstotal %>% 
    group_by(school_year) %>%
