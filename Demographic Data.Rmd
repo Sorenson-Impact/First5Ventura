@@ -380,7 +380,7 @@ distinct_rowstotal <- distinct_rowstotal %>%
 
 ```
 
-```{r fpl and things, echo=FALSE}
+```{r fpl and things, echo=FALSE, warning=FALSE, message=FALSE}
 
 distinct_rowstotal %>% 
   ungroup() %>% 
@@ -395,7 +395,13 @@ meantable <- distinct_rowstotal %>%
   ungroup() %>% 
   group_by(Zip) %>% 
   #mutate(Zip = as.factor(Zip)) %>% 
-  summarise(meanfpl = mean(fpl, na.rm = TRUE), medianfpl = median(fpl, na.rm = TRUE), count = n()) 
+  summarise(meanfpl = mean(fpl, na.rm = TRUE), medianfpl = median(fpl, na.rm = TRUE), count = n()) %>% 
+  arrange(meanfpl) %>% 
+  kable()
+
+meantable
+
+
 
 
 
