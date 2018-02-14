@@ -1,7 +1,7 @@
 ---
 title: "Demographics of First 5 Ventura"
 author: "Gwendolyn Reynolds"
-date: "1/30/2018"
+date: "2/14/2018"
 output:
   word_document: default
   html_document: default
@@ -375,10 +375,16 @@ distinct_rowstotal <- distinct_rowstotal %>%
                     ifelse(householdmems==11, 55340, NA))))))))))))
 
 distinct_rowstotal <- distinct_rowstotal %>% 
-  mutate(fpl = (income2/fplguide)*100)
+  mutate(fpl = (income2/fplguide)*100) %>% 
+  filter(school_year>=2014) %>% 
+  mutate(fpl2 = income2/fplguide)
 
 
 ```
+
+###Zip Code Analysis
+
+Below we construct a Federal Poverty Line ratio for each preschooler in our dataset and examine the distribution by Zip Code. 
 
 ```{r fpl and things, echo=FALSE, warning=FALSE, message=FALSE}
 
@@ -390,7 +396,11 @@ distinct_rowstotal %>%
   ggplot(aes(x = Zip, y = fpl)) +
   geom_point() +
   geom_boxplot()
+```
 
+The table below is sorted from the lowest average FPL to the highest. I have also included the total number of preschoolers served in each zip code so we get a sense of the size of the population served in each zip code. 
+
+```{r fpl table, echo=FALSE, warning=FALSE, message=FALSE}
 meantable <- distinct_rowstotal %>% 
   ungroup() %>% 
   group_by(Zip) %>% 
@@ -401,19 +411,131 @@ meantable <- distinct_rowstotal %>%
 
 meantable
 
+```
 
+Let's see how the Federal Poverty Level data for the First 5 Ventura Zip Codes compare to the ACS data. 
 
+```{r compare to ACS, echo=FALSE, warning=FALSE, message=FALSE}
 
+library(acs)
+library(tigris)
+
+# zipcodes <- distinct_rowstotal %>% ungroup() %>% select(Zip) %>% distinct() %>% filter(Zip!=0) %>% filter(!is.na(Zip))
+# 
+# zipcodes <- as.vector(zipcodes)
+# 
+# # zipcodes <- zctas(starts_with = c("91", "93"))
+# # counties <- c(111) # FIPS for Ventura
+# 
+# # install api key using key you get from census website
+# api.key.install(key="4d87536be3f8a2bc1536749b1b3f53cb869d6e54")
+# api.key.migrate()
+# 
+# #create a geographic set to grab tabular data 
+# geo <- geo.make(zip.code=zipcodes) 
+# 
+# #update endyear to 2015
+# 
+# table <- acs.fetch(endyear = 2015, span = 5, geography = geo, 
+#                      table.number = "C17002", col.names = "pretty")
+# 
+acstable <- read_csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/acs2016_5yr_Poverty level.csv")
+
+acstable <- acstable %>% rename(Zip = name) %>% mutate(Group = "ACS")
+
+distinct_rowstotal2 <- distinct_rowstotal %>% 
+  filter(!is.na(income) & !is.na(householdmems)) %>% 
+  mutate("Under .50" = ifelse(fpl2<=0.50, 1, 0)) %>% 
+  mutate(".50 to .99" = ifelse(fpl2>0.50 & fpl2<=0.99, 1, 0)) %>% 
+  mutate("1.00 to 1.24" = ifelse(fpl2>=1.00 & fpl2<=1.24, 1, 0)) %>% 
+  mutate("1.25 to 1.49" = ifelse(fpl2>=1.25 & fpl2<=1.49, 1, 0)) %>% 
+  mutate("1.50 to 1.84" = ifelse(fpl2>=1.50 & fpl2<=1.84, 1, 0)) %>% 
+  mutate("1.85 to 1.99" = ifelse(fpl2>=1.85 & fpl2<=1.99, 1, 0)) %>% 
+  mutate("2.00 and over" = ifelse(fpl2>=2.00, 1, 0))
+
+sumofall <- distinct_rowstotal2 %>% 
+  ungroup() %>% 
+  filter(Zip!=0) %>% 
+  filter(!is.na(Zip)) %>% 
+  select("Zip", 19:25) %>% 
+  group_by(Zip) %>% 
+  summarize(`Under .50` = sum(`Under .50`, na.rm = TRUE), ".50 to .99" = sum(`.50 to .99`, na.rm = TRUE), "1.00 to 1.24" = sum(`1.00 to 1.24`, na.rm = TRUE),  "1.25 to 1.49" = sum(`1.25 to 1.49`, na.rm = TRUE), "1.50 to 1.84" = sum(`1.50 to 1.84`, na.rm = TRUE), "1.85 to 1.99" = sum(`1.85 to 1.99`, na.rm = TRUE), "2.00 and over" = sum(`2.00 and over`, na.rm = TRUE)) %>% 
+  mutate(Group = "NfLFirst5")
+  
+comparison <- bind_rows(acstable, sumofall)
+
+comparison <- comparison %>% 
+  rowwise() %>% 
+  mutate(totalnfl = sum(c(`Under .50`, `.50 to .99`, `1.00 to 1.24`, `1.25 to 1.49`, `1.50 to 1.84`, `1.85 to 1.99`, `2.00 and over`))) 
+
+comparisonpercent <- comparison %>% 
+  ungroup() %>% 
+  mutate(Under50 = `Under .50`/totalnfl, "50to99" = `.50 to .99`/totalnfl, "1to124" = `1.00 to 1.24`/totalnfl, "125to149" = `1.25 to 1.49`/totalnfl, "150to184" = `1.50 to 1.84`/totalnfl, "185to199" = `1.85 to 1.99`/totalnfl, "200andover" = `2.00 and over`/totalnfl) %>% 
+    mutate(Under50 = `Under .50`/totalnfl, "50to99" = `.50 to .99`/totalnfl, "1to124" = `1.00 to 1.24`/totalnfl, "125to149" = `1.25 to 1.49`/totalnfl, "150to184" = `1.50 to 1.84`/totalnfl, "185to199" = `1.85 to 1.99`/totalnfl, "200andover" = `2.00 and over`/totalnfl) %>% 
+  select(Zip, Group, 21:27)
+
+comparisonpercent %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Group, y=Under50)) +
+  geom_point() +
+  geom_boxplot() +
+  ggtitle("ACS vs NfL First 5 Ventura for Under .50 of FPL")
+
+comparisonpercent %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Group, y=`50to99`)) +
+  geom_point() +
+  geom_boxplot() +
+  ggtitle("ACS vs NfL First 5 Ventura for between .50 to .99 of FPL")
+
+comparisonpercent %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Group, y=`1to124`)) +
+  geom_point() +
+  geom_boxplot() +
+  ggtitle("ACS vs NfL First 5 Ventura for between 1 and 1.24 of FPL")
+
+comparisonpercent %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Group, y=`125to149`)) +
+  geom_point() +
+  geom_boxplot() +
+  ggtitle("ACS vs NfL First 5 Ventura for between 1.25 and 1.49 of FPL")
+
+comparisonpercent %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Group, y=`150to184`)) +
+  geom_point() +
+  geom_boxplot() +
+  ggtitle("ACS vs NfL First 5 Ventura for between 1.50 and 1.84 of FPL")
+
+comparisonpercent %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Group, y=`185to199`)) +
+  geom_point() +
+  geom_boxplot() +
+  ggtitle("ACS vs NfL First 5 Ventura for between 1.85 and 1.99 of FPL")
+
+comparisonpercent %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Group, y=`200andover`)) +
+  geom_point() +
+  geom_boxplot() +
+  ggtitle("ACS vs NfL First 5 Ventura for Over 200% of FPL")
+
+comparisonpercent %>% 
+  arrange(Zip) %>% 
+  kable()
 
 ```
 
+### General Demographics of the First 5 Ventura Preschool Population
 
+Below are several tables describing the demographics of the First 5 Ventura preschool populations. 
+
+Table 1. Total Preschoolers Served by First5 Ventura by Year
 
 ```{r merged and deduplicated data, echo=FALSE}
-
-meantable %>% 
-  arrange(meanfpl) %>% 
-  kable()
 
 distinct_rowstotal %>% 
    group_by(school_year) %>%
@@ -429,6 +551,11 @@ distinct_rowstotal %>%
   labs(x="School Year", y="Total Number") +
   ggtitle("Total Number of Preschoolers by School Year")
 
+```
+
+Table 2. Total Ethnicity of Preschoolers
+
+```{r table 2, echo=FALSE}
 
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
@@ -437,6 +564,11 @@ distinct_rowstotal %>%
   summarise(count = n()) %>% 
   mutate(perc=(count/sum(count)*100)) %>% 
    kable()
+```
+
+Table 3. Ethnicity by Year
+
+```{r table 3, echo=FALSE}
 
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
@@ -457,7 +589,11 @@ distinct_rowstotal %>%
   labs(x="Ethnicity", y="Percent") +
   ggtitle("Ethnicity by Preschoolers")
 
+```
 
+Table 4. Total Language Spoken by First5 Ventura Preschoolers
+
+```{r table 4, echo=FALSE}
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
   filter(!is.na(Language)) %>% 
@@ -465,6 +601,11 @@ distinct_rowstotal %>%
   summarise(count = n()) %>% 
   mutate(perc=(count/sum(count)*100)) %>% 
    kable()
+```
+
+Table 5. Language Spoken by Year 
+
+```{r table 5, echo=FALSE}
 
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
@@ -484,7 +625,11 @@ distinct_rowstotal %>%
   geom_col()+
   labs(x="Language", y="Percent") +
   ggtitle("Language Spoken by Preschoolers")
+```
 
+Table 6. Income for First 5 Ventura Preschoolers
+
+```{r table 6, echo=FALSE}
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
   filter(!is.na(income)) %>% 
@@ -492,7 +637,11 @@ distinct_rowstotal %>%
   summarise(count = n()) %>% 
   mutate(perc=(count/sum(count)*100)) %>% 
    kable()
+```
 
+Table 7. Income by Year
+
+```{r table 7, echo=FALSE}
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
   filter(!is.na(income)) %>% 
@@ -511,7 +660,11 @@ distinct_rowstotal %>%
   geom_col()+
   labs(x="income", y="Percent") +
   ggtitle("Family Income")
+```
 
+Table 8. Mean Household Members for First 5 Ventura Preschoolers
+
+```{r table 8, echo=FALSE}
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
   filter(!is.na(householdmems)) %>% 
@@ -519,7 +672,11 @@ distinct_rowstotal %>%
   mutate(householdmems = as.numeric(householdmems)) %>% 
   summarise(meanHouseholdMembers = mean(householdmems, na.rm = TRUE)) %>% 
    kable()
+```
 
+Table 9. Mean Household Members by School Year
+
+```{r table 9, echo=FALSE}
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
   filter(!is.na(householdmems)) %>% 
@@ -538,7 +695,11 @@ distinct_rowstotal %>%
   geom_col()+
   labs(x="School Year", y="Mean Household Members") +
   ggtitle("Mean Household Members by School Year")
+```
 
+Table 10. Gender of First 5 Ventura Preschoolers
+
+```{r table 10, echo=FALSE}
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
   filter(!is.na(Gender)) %>% 
@@ -546,7 +707,11 @@ distinct_rowstotal %>%
   summarise(count = n()) %>% 
   mutate(perc=(count/sum(count)*100)) %>% 
    kable()
+```
 
+Table 11. Gender by Year
+
+```{r table 11, echo=FALSE}
 distinct_rowstotal %>% 
   filter(school_year>=2014) %>% 
   filter(!is.na(Gender)) %>% 
