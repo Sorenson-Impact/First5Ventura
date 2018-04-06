@@ -3,6 +3,8 @@ title: "Ventura QRIS Maps"
 output:
   html_document: default
   html_notebook: default
+  pdf_document: default
+date: "Updated April 2018"
 ---
 
 
@@ -112,11 +114,11 @@ final_df <- qris_mg
 #### Start the geocode analysis
 geocodes <- read_excel('~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/finalgeocodes1 .xlsx')
 
-QRIS1 <- subset(final_df, overallqris_trating == 1)
-QRIS2 <- subset(final_df, overallqris_trating == 2)
+QRIS1AND2 <- subset(final_df, overallqris_trating == 1 | overallqris_trating == 2)
+#QRIS2 <- subset(final_df, overallqris_trating == 2)
 QRIS3 <- subset(final_df, overallqris_trating == 3)
-QRIS4 <- subset(final_df, overallqris_trating == 4)
-QRIS5 <- subset(final_df, overallqris_trating == 5)
+QRIS4AND5 <- subset(final_df, overallqris_trating == 4 | overallqris_trating == 5)
+#QRIS5 <- subset(final_df, overallqris_trating == 5)
 colnames(geocodes)[colnames(geocodes) == 'lon'] <- 'lng'
 
 
@@ -132,13 +134,16 @@ colnames(geocodes)[colnames(geocodes) == 'lon'] <- 'lng'
 # geocodes5 <- geocode(as.character(QRIS5$address))
 # colnames(geocodes5)[colnames(geocodes5) == 'lon'] <- 'lng'
 
-QRSADRS1 <- merge(select(QRIS1,site_name.x),geocodes, by="row.names",all.x=TRUE)
-QRSADRS2 <- merge(select(QRIS2,site_name.x),geocodes, by="row.names",all.x=TRUE)
+QRSADRS1 <- merge(select(QRIS1AND2,site_name.x),geocodes, by="row.names",all.x=TRUE)
+#QRSADRS2 <- merge(select(QRIS2,site_name.x),geocodes, by="row.names",all.x=TRUE)
 QRSADRS3 <- merge(select(QRIS3,site_name.x),geocodes, by="row.names",all.x=TRUE)
-QRSADRS4 <- merge(select(QRIS4,site_name.x),geocodes, by="row.names",all.x=TRUE)
-QRSADRS5 <- merge(select(QRIS5,site_name.x),geocodes, by="row.names",all.x=TRUE)
+QRSADRS4 <- merge(select(QRIS4AND5,site_name.x),geocodes, by="row.names",all.x=TRUE)
+#QRSADRS5 <- merge(select(QRIS5,site_name.x),geocodes, by="row.names",all.x=TRUE)
 
-NA_df <- rbind(subset(QRSADRS2, is.na(lat)),subset(QRSADRS3, is.na(lat)),subset(QRSADRS4, is.na(lat)),subset(QRSADRS5, is.na(lat))) # when empty, all values correctly inputted
+# NA_df <- rbind(subset(QRSADRS2, is.na(lat)),subset(QRSADRS3, is.na(lat)),subset(QRSADRS4, is.na(lat)),subset(QRSADRS5, is.na(lat))) # when empty, all values correctly inputted
+
+NA_df <- rbind(subset(QRSADRS1, is.na(lat)),subset(QRSADRS3, is.na(lat)),subset(QRSADRS4, is.na(lat))) # when empty, all values correctly inputted
+
 
 
 # noter: families under 200% the federal poverty lelve will be eligible for subsidized preschool
@@ -147,12 +152,15 @@ NA_df <- rbind(subset(QRSADRS2, is.na(lat)),subset(QRSADRS3, is.na(lat)),subset(
 
 # SNAP/Food Stamps 
 The following map displays ACS SNAP data and QRIS rated sites. 
+
 The legend of QRIS ratings is as follows: 
-Dark Red - QRIS rating of 1;
-Red - QRIS rating of 2;
-Dark Blue - QRIS rating of 3;
-Blue - QRIS rating of 4;
-Light Blue - QRIS rating of 5;
+
+* Light Blue - QRIS rating of 1 or 2;
+
+* Dark Blue - QRIS rating of 3;
+
+* Dark Red - QRIS rating of 4 or 5.
+
 
 
 
@@ -169,21 +177,25 @@ api.key.install(key="f5076b03b081b910cd6d0cebe26ad28d2ad49454")
 geo <- geo.make(state=c("CA"), 
                 county=c(111), tract="*") 
 
-# Fetch SNAP/Food Stamps Data
-poverty <- acs.fetch(endyear = 2015, span = 5, geography = geo, 
-                     table.number = "B22002", col.names = "pretty")
+# # Fetch SNAP/Food Stamps Data
+# poverty <- acs.fetch(endyear = 2015, span = 5, geography = geo, 
+#                      table.number = "B22002", col.names = "pretty")
+# 
+# poverty_df <- data.frame(paste0(str_pad(poverty@geography$state, 2, "left", pad="0"), 
+#                                 str_pad(poverty@geography$county, 3, "left", pad = "0"), 
+#                                 str_pad(poverty@geography$tract, 6, "left", pad = "0")), 
+#                          poverty@estimate[,c("Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household did not receive Food Stamps/SNAP in the past 12 months:", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months:", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years:", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Married-couple family", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Other family:","Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Other family: Male householder, no wife present", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Other family: Female householder, no husband present", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Nonfamily households")], 
+#                          stringsAsFactors = FALSE)
+# 
+# # Selects df
+# poverty_df <- select(poverty_df, 1:9)
+# rownames(poverty_df)<-1:nrow(poverty_df)
+# names(poverty_df)<-c("GEOID", "didnottotal", "didtotal", "wkids", "married", "otherfam", "maleonly", "femaleonly", "nonfam")
+# poverty_df$percent <- 100*(poverty_df$wkids/(poverty_df$didnottotal+poverty_df$didtotal))
+# 
+# write_rds(poverty_df, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/poverty_df.rds")
 
-poverty_df <- data.frame(paste0(str_pad(poverty@geography$state, 2, "left", pad="0"), 
-                                str_pad(poverty@geography$county, 3, "left", pad = "0"), 
-                                str_pad(poverty@geography$tract, 6, "left", pad = "0")), 
-                         poverty@estimate[,c("Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household did not receive Food Stamps/SNAP in the past 12 months:", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months:", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years:", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Married-couple family", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Other family:","Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Other family: Male householder, no wife present", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Other family: Female householder, no husband present", "Receipt of Food Stamps/SNAP by Presence of Children Under 18 Years by Household Type for Households: Household received Food Stamps/SNAP in the past 12 months: With children under 18 years: Nonfamily households")], 
-                         stringsAsFactors = FALSE)
-
-# Selects df
-poverty_df <- select(poverty_df, 1:9)
-rownames(poverty_df)<-1:nrow(poverty_df)
-names(poverty_df)<-c("GEOID", "didnottotal", "didtotal", "wkids", "married", "otherfam", "maleonly", "femaleonly", "nonfam")
-poverty_df$percent <- 100*(poverty_df$wkids/(poverty_df$didnottotal+poverty_df$didtotal))
+poverty_df <- read_rds("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/poverty_df.rds")
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -195,7 +207,7 @@ poverty_merged<- geo_join(tracts, poverty_df, "GEOID", "GEOID")
 poverty_merged <- poverty_merged[poverty_merged$ALAND>0,]
 
 # make the pop up
-popup <- paste0("GEOID: ", poverty_merged$GEOID, "<br>", "Percent of Households w/ Children using SNAP/Food Stamps ", round(poverty_merged$percent,2))
+popup <- paste0("GEOID: ", poverty_merged$GEOID, "<br>", "Percent of Households w/ Children using SNAP/Food Stamps ", poverty_merged$percent)
 pal <- colorNumeric(
   palette = "YlGnBu",
   domain = poverty_merged$percent
@@ -218,11 +230,11 @@ map<-leaflet() %>%
             title = "Percent of Households<br>w/ Children using SNAP/Food Stamps",
             labFormat = labelFormat(suffix = "%")) %>%
 
-  addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred')) %>%
-  addAwesomeMarkers(QRSADRS2$lng, QRSADRS2$lat, popup = QRSADRS2$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'red'))%>%
+  # addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred')) %>%
+  addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
   addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
-  addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'blue'))%>%
-  addAwesomeMarkers(QRSADRS5$lng, QRSADRS5$lat, popup = QRSADRS5$site_name.x,popupOptions = popupOptions(style = list("color" = "black")), icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
+  addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
+  # addAwesomeMarkers(QRSADRS5$lng, QRSADRS5$lat, popup = QRSADRS5$site_name.x,popupOptions = popupOptions(style = list("color" = "black")), icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
   addLayersControl(
                    overlayGroups = c("SNAP"), 
                    options = layersControlOptions(collapsed = FALSE))
@@ -236,35 +248,41 @@ map
 
 # % of Federal Poverty Line
 The following map displays ACS % of Federal Poverty Line data and QRIS rated sites. 
+
 The legend of QRIS ratings is as follows: 
-Dark Red - QRIS rating of 1;
-Red - QRIS rating of 2;
-Dark Blue - QRIS rating of 3;
-Blue - QRIS rating of 4;
-Light Blue - QRIS rating of 5;
+
+* Light Blue - QRIS rating of 1 or 2;
+
+* Dark Blue - QRIS rating of 3;
+
+* Dark Red - QRIS rating of 4 or 5.
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE, include=FALSE}
 ##### For Poverty 200% https://www.cde.ca.gov/sp/cd/ce/ltrgvnrapr2016.asp
-poverty <- acs.fetch(endyear = 2015, span = 5, geography = geo, 
-                     table.number = "C17002", col.names = "pretty")
+# poverty <- acs.fetch(endyear = 2015, span = 5, geography = geo, 
+#                      table.number = "C17002", col.names = "pretty")
+# 
+# attr(poverty, "acs.colnames")
+# 
+# # Gets columns from df
+# poverty_df <- data.frame(paste0(str_pad(poverty@geography$state, 2, "left", pad="0"), 
+#                                 str_pad(poverty@geography$county, 3, "left", pad = "0"), 
+#                                 str_pad(poverty@geography$tract, 6, "left", pad = "0")), 
+#                          poverty@estimate[,c( "Ratio of Income to Poverty Level in the Past 12 Months: Total:", "Ratio of Income to Poverty Level in the Past 12 Months: Under .50","Ratio of Income to Poverty Level in the Past 12 Months: .50 to .99","Ratio of Income to Poverty Level in the Past 12 Months: 1.00 to 1.24","Ratio of Income to Poverty Level in the Past 12 Months: 1.25 to 1.49","Ratio of Income to Poverty Level in the Past 12 Months: 1.50 to 1.84","Ratio of Income to Poverty Level in the Past 12 Months: 1.85 to 1.99" )], 
+#                          stringsAsFactors = FALSE)
+# 
+# # Changes names of poverty_df
+# rownames(poverty_df)<-1:nrow(poverty_df)
+# names(poverty_df)<-c("GEOID", "Total", "50%", "100% ", "125%", "150%","185","200")
+# 
+# poverty_df$percent <- 0
+# # Calculates % below 200% of poverty rate
+# 
+# poverty_df$percent <- 100*(((poverty_df$"50%"+poverty_df$"100%"+poverty_df$"125%"+poverty_df$"150%")/(poverty_df$"Total")))
 
-attr(poverty, "acs.colnames")
+# write_rds(poverty_df, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/poverty_df2.rds")
 
-# Gets columns from df
-poverty_df <- data.frame(paste0(str_pad(poverty@geography$state, 2, "left", pad="0"), 
-                                str_pad(poverty@geography$county, 3, "left", pad = "0"), 
-                                str_pad(poverty@geography$tract, 6, "left", pad = "0")), 
-                         poverty@estimate[,c( "Ratio of Income to Poverty Level in the Past 12 Months: Total:", "Ratio of Income to Poverty Level in the Past 12 Months: Under .50","Ratio of Income to Poverty Level in the Past 12 Months: .50 to .99","Ratio of Income to Poverty Level in the Past 12 Months: 1.00 to 1.24","Ratio of Income to Poverty Level in the Past 12 Months: 1.25 to 1.49","Ratio of Income to Poverty Level in the Past 12 Months: 1.50 to 1.84","Ratio of Income to Poverty Level in the Past 12 Months: 1.85 to 1.99" )], 
-                         stringsAsFactors = FALSE)
-
-# Changes names of poverty_df
-rownames(poverty_df)<-1:nrow(poverty_df)
-names(poverty_df)<-c("GEOID", "Total", "50%", "100% ", "125%", "150%","185","200")
-
-poverty_df$percent <- 0
-# Calculates % below 200% of poverty rate
-
-poverty_df$percent <- 100*(((poverty_df$"50%"+poverty_df$"100%"+poverty_df$"125%"+poverty_df$"150%")/(poverty_df$"Total")))
+poverty_df <- read_rds("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/poverty_df2.rds")
 
 # Merge Poverty
 poverty_merged<- geo_join(tracts, poverty_df, "GEOID", "GEOID")
@@ -300,11 +318,9 @@ map<-leaflet() %>%
             position = "bottomright", 
             title = "Percent of Households<br> Below 150% of the Poverty Line",
             labFormat = labelFormat(suffix = "%")) %>%
-  addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred')) %>%
-  addAwesomeMarkers(QRSADRS2$lng, QRSADRS2$lat, popup = QRSADRS2$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'red'))%>%
+  addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
   addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
-  addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'blue'))%>%
-  addAwesomeMarkers(QRSADRS5$lng, QRSADRS5$lat, popup = QRSADRS5$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
+  addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
   addLayersControl(
                    overlayGroups = c("% of Poverty Line"), 
                    options = layersControlOptions(collapsed = FALSE))

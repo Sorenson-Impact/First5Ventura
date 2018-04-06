@@ -1,0 +1,531 @@
+---
+title: "Demographics of First 5 Ventura"
+author: "Gwendolyn Reynolds"
+date: "4/6/2018"
+output:
+  word_document: default
+  html_document: default
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load packages 
+library(knitr)
+library(readxl)
+library(scales)
+library(tidyverse)
+library(anonymizer)
+library(lubridate)
+library(forcats)
+library(sorensonimpact)
+
+si_ggplot_theme_update() 
+theme_update(text = element_text(family = "Roboto"), axis.text = element_text(family = "Roboto"), strip.text = element_text(family = "Roboto"), axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+```{r read in data, include=FALSE, warning=FALSE, message=FALSE}
+
+# import_member <- read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Clients with Preschool Services by Year.xls")
+# family_intake <- read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Family Intakes 2014-2018.xls")
+# preschool <- read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Clients with Preschool Services by Year.xls")
+ziptocity <- read_csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/zipcodeCity.csv")
+
+oldform <-  read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Old Intake Export 2014-2018.xls")
+family <-  read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Family Intake Data FY 2014-2018.xls")
+missing <-  read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Missing Family Intake 2014-2018.xls")
+
+kids14 <- read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Children with Preschool Services 2014-15.xls")
+kids15 <- read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Children with Preschool Services 2015-2016.xls")
+kids16 <- read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Children with Preschool Services 2016-2017.xls")
+kids17 <- read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Children with Preschool Services FY2017-2018.xls")
+
+```
+
+```{r clean and merge, echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
+# 
+# missing <- missing %>% mutate(wherelive = `01-10: 10 Where does your family currently live?`) %>% 
+# rename(education = "01-1: 1 What is your highest level of education", 
+#   wherelive = "01-10: 10 Where does your family currently live?" ,               
+#   employment = "01-2: 2 What is your current employment status?"    ,             
+#   maritalstatus = "01-3: 3 What is the marital status of the adults?"    ,           
+#   income = "01-4: 4 What was your total FAMILY INCOME in the last 12 months?",
+#   smoke = "01-5: 5 Does anyone in your household smoke?"   ,                 
+#   childrenhouse = "01-6: 6 How many children in your household are 0-5 years old?"  ,
+#   householdmems = "01-7: 7 How many family members live in your household? (incl_ a",
+#   health = "01-8: 8 Do all family members in your home have health coverage" ,
+#   pregmom = "01-9: 9 Is there an expectant mother in the home?", 
+#   ProgramTitle = `Program Title`)
+# 
+# family <- family %>% 
+#   group_by(FamilyID, ClientID, `Assessment Date`, Question) %>% 
+#   select(-`Answer Value`, -`Answer Memo`) %>% 
+#   mutate(dups = n()) %>% 
+#   mutate(rank = rank(row_number())) %>% 
+#   select(-dups)
+# 
+# 
+# familyspread <- spread(family, Question, Answer) 
+# 
+# familyspread <- familyspread %>% 
+#   rename(health = `Do all family members in your home have health coverage such as insurance throuhg work, MediCal (Gold Coast), or other insurance?`,
+#          smoke = `Does anyone in your household smoke?`,
+#          childrenhouse = `How many children in your household are 0-5 years old?`,
+#          householdmems = `How many family members live in your household? (incl. all)`,
+#          pregmom = `Is there an expectant mother in the home?`,
+#          maritalstatus = `What is the marital status of the adults?`,
+#          employment = `What is your current employment status?`,
+#          education = `What is your highest level of education`,
+#          income = `What was your total FAMILY INCOME in the last 12 months?`,
+#          wherelive = `Where does your family currently live?`) %>%
+#   distinct() %>% 
+#   rename(ProgramTitle = `Client Program Title`)
+# 
+# newfamily <- bind_rows(missing, familyspread)
+# 
+# oldform <- oldform %>% 
+#   select(-`Answer Memo`) %>% 
+#   mutate(Answer2 = ifelse(is.na(Answer), `Answer Value`, Answer)) %>% 
+#   select(-Answer, -`Answer Value`)
+# 
+# oldform <- oldform %>% 
+#   group_by(FamilyID, ClientID, `Assessment Date`, Question) %>% 
+#   mutate(dups = n()) %>% 
+#   mutate(rank = rank(row_number())) %>% 
+#   select(-dups)
+# 
+# oldformspread <- spread(oldform, Question, Answer2)
+# 
+# oldformspread <- oldformspread %>% 
+#   rename(marital = `Marital status?`,
+#          employment = `Employment status?`,
+#          education = `Have high school diploma/GED?`,
+#          income = `Income Level`,
+#          childrenhouse = `Total # of children in house between 0-5`,
+#          householdmems = `Total # of family members in house`) %>%
+#   select(1:12, marital, employment, education, income, childrenhouse, householdmems) %>% 
+#   rename(`ProgramTitle` = `Client Program Title`)
+# 
+# familycombined <- bind_rows(newfamily, oldformspread)
+# 
+# familycombined <- familycombined %>% 
+#   select(-`Contract Number`, -`Client Type`, -`Enrollment Date`, -LastServiceDate, -`Assessment Entered By`, -rank) %>% 
+#   distinct()
+# 
+# kids14 <- kids14 %>% 
+#   select(-X__1)
+# 
+# kids15 <- kids15 %>% 
+#   select(-X__1, -X__2) 
+# 
+# kids16 <- kids16 %>% 
+#   select(-X__1, -X__2)
+# 
+# kids17 <- kids17 %>% 
+#   select(-X__1)
+# 
+# kidsappend <- bind_rows(kids14, kids15) 
+# kidsappend <- bind_rows(kidsappend, kids16)
+# kidsappend <- bind_rows(kidsappend, kids17)
+# 
+# kidsappend <- kidsappend %>% 
+#   select(-14:-19)
+# 
+# preschool <- kidsappend
+# 
+# family_intake <- familycombined
+```
+
+```{r}
+# 
+# ## get the dates in the same format
+# preschool$`Enrollment Date_` <- as.Date(preschool$`Enrollment Date_`, "%m/%d/%Y")
+# #preschool$`Exited Date` <- as.Date(preschool$`Service EndDate`, "%m/%d/%Y")
+# 
+# ##I want to know the year of enrollment, so i'm creating a "year" variable
+# preschool <- preschool %>% 
+#   mutate(school_year = year(`Enrollment Date_`)) 
+# 
+# ## this dataset has a bunch of repeat rows. I want to filter those out. 
+# # preschool <- preschool %>% 
+# #   group_by(`Program Title`, ClientID, Zip, school_year) %>% 
+# #   mutate(count = n()) %>% 
+# #   mutate(rank = rank(`Enrollment Date_`)) %>% 
+# #   filter(rank==1)
+# 
+# preschool <- preschool %>% 
+#   group_by(`Program Title`, ClientID, Zip, school_year) %>% 
+#   mutate(count = n()) %>% 
+#   mutate(rank = rank(`Enrollment Date_`)) 
+# 
+# ### collapse all ethnicities besides white/latino/other
+# preschool <- preschool %>% 
+#     mutate(Ethnicity = as.factor(Ethnicity)) 
+# 
+# preschool <- preschool %>% 
+#     mutate(Ethnicity= (fct_collapse(Ethnicity, "Other" = c("01. Alaskan Native / American Indian", "02. Asian", "03. Black / African American", "05. Vietnamese", "06. Pacific Islander", "08. Multiracial", "09. Other", "10. Don't know/Declined")))) 
+# 
+# 
+# preschool <- preschool %>% 
+#     mutate(Language= (fct_collapse(Language, "Other" = c("03. Mixteco", "05. Vietnamese", "07. Mandarin (Putonghua)", "09. Filipino(Tagalog)", "10. Other", "11. Arabic", "13. Chinese", "15. Unknown", "16. Decline to Answer", "06. Korean", "14. Other", "08. Farsi (Persian)", "12. Cambodian", "04. Hmong", "11. Don't Know/Declined")))) 
+# 
+# family_intake$Assessment_Date <- as.Date(family_intake$Assessment_Date, "%m/%d/%Y")
+# 
+# ##I want to know the year of enrollment, so i'm creating a "year" variable
+# family_intake <- family_intake %>% 
+#   mutate(school_year = year(`Assessment_Date`)) 
+# 
+# family_intake <- family_intake %>% 
+#   group_by(`ProgramTitle`, ClientID, Zip, school_year) %>% 
+#   mutate(count = n()) %>% 
+#   mutate(rank = rank(`Assessment_Date`)) 
+# 
+# family_intake <- family_intake %>% 
+#     mutate(Ethnicity= (fct_collapse(Ethnicity, "Other" = c("01. Alaskan Native / American Indian", "02. Asian", "03. Black / African American", "05. Vietnamese", "06. Pacific Islander", "08. Multiracial", "09. Other", "10. Don't know/Declined")))) 
+# 
+# 
+# family_intake <- family_intake %>% 
+#     mutate(Language= (fct_collapse(Language, "Other" = c("03. Mixteco", "05. Vietnamese", "07. Mandarin (Putonghua)", "09. Filipino(Tagalog)", "10. Other", "11. Arabic", "13. Chinese", "15. Unknown", "16. Decline to Answer", "06. Korean", "14. Other", "08. Farsi (Persian)", "12. Cambodian", "04. Hmong")))) 
+# 
+# write_rds(preschool, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/preschooldatacleaned.rds")
+# write_rds(family_intake, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/family_intakecleaned.rds")
+
+preschool <- read_rds("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/preschooldatacleaned.rds")
+family_intake <- read_rds("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/family_intakecleaned.rds")
+
+```
+
+
+```{r}
+ziptocity <- ziptocity %>% slice(1:53) %>% mutate(Zip = as.integer(`Zip Code`)) 
+
+family_intake <- family_intake %>% ungroup() %>% mutate(Zip = as.integer(Zip))
+
+family_intaketest <- family_intake %>% 
+  right_join(ziptocity, family_intake, by = "Zip")
+
+family_intaketest <- family_intaketest %>% filter(!is.na(ClientID)) 
+
+family_intaketest <- family_intaketest %>% group_by(`ProgramTitle`, ClientID, Zip, school_year) %>% mutate(count = n()) %>% 
+  mutate(rank = rank(`Assessment_Date`)) 
+
+family_intaketest %>% 
+  group_by(rank) %>% 
+  summarise(count = n())
+
+notpre <- c("01: Preschool (Marina West)", "Preschool (Berylwood)", "Preschool (Hathaway School)", "Preschool (Sierra Linda)", "Preschool {Hueneme Head Start}", "Preschool {Larsen Head Start}", "Preschool {Little Vikings Head Start}", "Preschool {Parkview Head Start}")
+`%notin%` <- Negate(`%in%`)
+
+preschool <- preschool %>% 
+  filter(`Service Modality` %notin% notpre)
+
+preschool %>% 
+  group_by(`Service Modality`) %>% 
+  count(`Service Modality`)
+
+preschool <- preschool %>% ungroup %>% mutate(dataset = "preschool") %>% mutate(Zip = as.integer(Zip))
+family_intake <- family_intake %>% ungroup %>%  mutate(dataset = "family") %>% mutate(Zip = as.integer(Zip))
+
+preschool2 <- preschool %>% filter(FamilyID!=0)
+mergedpreschool <- left_join(preschool2, family_intake, by = c("FamilyID" = "FamilyID"))
+
+mergedpreschool <- mergedpreschool %>% mutate(school_year = ifelse(school_year.x==school_year.y, 1, 0))
+
+mergedpreschool %>% 
+  ungroup() %>% 
+  count(school_year)
+
+mergedpreschool <- mergedpreschool %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`)) 
+
+mergedpreschool %>% 
+  group_by(school_year) %>% 
+  count(rank)
+
+mergedpreschool <- mergedpreschool %>% 
+  mutate(dataset = ifelse(is.na(dataset.y), "preschool only", 
+                   ifelse(dataset.y=="family", "family", "neither"))) 
+
+mergedpreschool %>% 
+  ungroup() %>% 
+  count(dataset)
+
+mergedpreschool %>% 
+  filter(dataset=="family") %>% 
+  group_by(school_year) %>% 
+  count(count)
+
+mergedpreschool %>% 
+  filter(count==6) %>% 
+  print()
+```
+
+```{r deduplicate, echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
+distinct_rows <- mergedpreschool %>% select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Zip.x", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems", "school_year.y") %>% distinct()
+
+distinct_rows <- distinct_rows %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rows %>% 
+  filter(rank==1.5) %>% 
+  print()
+
+distinct_rows %>% 
+  ungroup() %>% 
+  count(rank)
+
+distinct_rows <- distinct_rows %>% 
+  mutate(double = ifelse(income=="No answer/prefer not to say" & count>1, "1", "0")) %>% 
+  filter(double!=1)
+
+distinct_rows <- distinct_rows %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rows %>% 
+  ungroup() %>% 
+  count(rank)
+
+distinct_rows <- distinct_rows %>% 
+  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "wherelive", "employment", "maritalstatus", "income", "householdmems", "Zip.x", "school_year.y") %>% distinct()
+
+distinct_rows <- distinct_rows %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rows %>% 
+  ungroup() %>% 
+  count(rank)
+
+distinct_rows <- distinct_rows %>% 
+  mutate(double = ifelse(employment=="No answer/prefer not to say" & count>1, "1", "0")) %>% 
+  filter(double!=1)
+
+distinct_rows <- distinct_rows %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rows %>% 
+  ungroup() %>% 
+  count(rank)
+
+distinct_rows <- distinct_rows %>% 
+  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "income", "householdmems", "Zip.x", "school_year.y") %>% distinct()
+
+distinct_rows <- distinct_rows %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rows <- distinct_rows %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.y`))
+
+distinct_rows %>% ungroup() %>% count(rank)
+
+distinct_rows <- distinct_rows %>% 
+  filter(rank==1)
+
+distinct_rows <- distinct_rows %>% 
+  group_by(school_year.x, ClientID.x) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+# distinct_rows <- distinct_rows %>% 
+#   filter(count==1) 
+
+distinct_rows %>% 
+  ungroup() %>% 
+  count(income)
+
+### merge client IDs where family ID is 0. 
+preschool3 <- preschool %>% filter(FamilyID==0) 
+mergedpreschool2 <- left_join(preschool3, family_intake, by = c("ClientID" = "ClientID"))
+
+mergedpreschool2 <- mergedpreschool2 %>% mutate(school_year = ifelse(school_year.x==school_year.y, 1, 0))
+
+mergedpreschool2 <- mergedpreschool2 %>% 
+  group_by(school_year.x, ClientID) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`)) 
+
+mergedpreschool2 <- mergedpreschool2 %>% 
+  mutate(dataset = ifelse(is.na(dataset.y), "preschool only", 
+                   ifelse(dataset.y=="family", "family", "neither"))) 
+
+# unique_rows <- !duplicated(mergedpreschool[c("ClientID.x","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems")])
+
+distinct_rows2 <- mergedpreschool2 %>% select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Zip.x", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems", "school_year.y") %>% distinct()
+
+distinct_rows2 <- distinct_rows2 %>% 
+  group_by(school_year.x, ClientID) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rows2 %>% 
+  filter(rank==1.5) %>% 
+  print()
+
+distinct_rows2 <- distinct_rows2 %>% 
+  mutate(double = ifelse(income=="No answer/prefer not to say" & count>1, "1", "0")) %>% 
+  filter(double!=1)
+
+distinct_rows2 <- distinct_rows2 %>% 
+  group_by(school_year.x, ClientID) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rows2 <- distinct_rows2 %>% 
+  select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "wherelive", "employment", "maritalstatus", "income", "householdmems", "Zip.x", "school_year.y") %>% distinct()
+
+distinct_rows2 <- distinct_rows2 %>% 
+  group_by(school_year.x, ClientID) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rows2 <- distinct_rows2 %>% 
+  mutate(double = ifelse(employment=="No answer/prefer not to say" & count>1, "1", "0")) %>% 
+  filter(double!=1)
+
+distinct_rows2 <- distinct_rows2 %>% 
+  group_by(school_year.x, ClientID) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rows2 <- distinct_rows2 %>% 
+  select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "income", "householdmems", "Zip.x", "school_year.y") %>% distinct()
+
+distinct_rows2 <- distinct_rows2 %>% 
+  group_by(school_year.x, ClientID) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.y`))
+
+distinct_rows2 %>% 
+  ungroup() %>% 
+  count(rank)
+
+distinct_rows2 <- distinct_rows2 %>% 
+  filter(rank==1) 
+
+distinct_rows2 %>% 
+  ungroup() %>% 
+  count(income)
+
+distinct_rows <- distinct_rows %>% 
+  rename(ClientID = ClientID.x)
+
+distinct_rowstotal <- bind_rows(distinct_rows, distinct_rows2)
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  group_by(school_year.x, ClientID) %>% 
+  mutate(count = n()) %>% 
+  mutate(rank = rank(`school_year.x`))
+
+distinct_rowstotal %>% 
+  ungroup() %>% 
+  count(count)
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  rename(school_year = school_year.x) %>% 
+  rename(Ethnicity = Ethnicity.x) %>% 
+  rename(Language = Language.x) %>% 
+  rename(Zip = Zip.x)
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  group_by(ClientID) %>% 
+  mutate(repeats = n()) %>% 
+  mutate(rank = rank(`school_year`))
+
+distinct_rowstotal %>% 
+  ungroup() %>% 
+  count(householdmems)
+
+distinct_rowstotal <-  distinct_rowstotal %>%
+  mutate(income2 = ifelse(income=="Less than $10,000", 5000, 
+                   ifelse(income=="$10,000 less than $20,000", 15000, 
+                   ifelse(income=="$20,000 less than $30,000", 25000, 
+                   ifelse(income=="$30,000 less than $40,000", 35000, 
+                   ifelse(income=="$40,000 less than $50,000", 45000, 
+                   ifelse(income=="$50,000 less than $75,000", 62500, 
+                   ifelse(income=="$75,000 less than $100,000", 87500, 
+                   ifelse(income=="More than $100,000", 105000, NA)))))))))
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  mutate(fplguide = ifelse(householdmems==1, 12140, 
+                    ifelse(householdmems==2, 16460, 
+                    ifelse(householdmems==3, 20780, 
+                    ifelse(householdmems==4, 25100, 
+                    ifelse(householdmems==5, 29420, 
+                    ifelse(householdmems==6, 33740, 
+                    ifelse(householdmems==7, 38060, 
+                    ifelse(householdmems==8, 42380, 
+                    ifelse(householdmems==9, 46700, 
+                    ifelse(householdmems==10, 51020, 
+                    ifelse(householdmems==11, 55340, NA))))))))))))
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  mutate(fpl = (income2/fplguide)*100) %>% 
+  filter(school_year>=2014) %>% 
+  mutate(fpl2 = income2/fplguide)
+
+# sam wants a list of ids that do not merge 
+# mergedids <- distinct_rowstotal %>% 
+#   select(ClientID)
+# 
+# idvector <- mergedids[['ClientID']]
+# 
+# `%notin%` <- Negate(`%in%`)
+# 
+# preschoolnotmerged <- preschool %>% 
+#   filter(ClientID %notin% idvector)
+
+#write_csv(preschoolnotmerged, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/preschoolnotmerged.csv")
+
+# familycombined%>% 
+#   filter(ClientID==85476) %>% 
+#   print()
+
+preschooldistinct <- preschool %>% 
+  group_by(FamilyID, ClientID, school_year) %>% 
+  distinct()
+
+
+preschooldistinct %>% 
+   group_by(school_year) %>%
+  summarise(count = n()) %>% 
+   kable()
+```
+
+Table 1. Total Preschoolers Served by First5 Ventura by Year
+
+```{r merged and deduplicated data, echo=FALSE}
+
+distinct_rowstotal %>% 
+   group_by(school_year) %>%
+  summarise(count = n()) %>% 
+ # mutate(perc=(count/sum(count)*100)) %>% 
+   kable()
+
+distinct_rowstotal %>% 
+   group_by(school_year) %>%
+  summarise(count = n()) %>% 
+  ggplot(aes(x=school_year, y=count)) +
+  geom_col()+
+  labs(x="School Year", y="Total Number") +
+  ggtitle("Total Number of Preschoolers by School Year")
+
+```
+
