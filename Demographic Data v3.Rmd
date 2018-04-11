@@ -49,30 +49,30 @@ kids17 <- read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschoo
 
 ```{r clean and merge, echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
 # 
-# missing <- missing %>% mutate(wherelive = `01-10: 10 Where does your family currently live?`) %>% 
-# rename(education = "01-1: 1 What is your highest level of education", 
-#   wherelive = "01-10: 10 Where does your family currently live?" ,               
-#   employment = "01-2: 2 What is your current employment status?"    ,             
-#   maritalstatus = "01-3: 3 What is the marital status of the adults?"    ,           
+# missing <- missing %>% mutate(wherelive = `01-10: 10 Where does your family currently live?`) %>%
+# rename(education = "01-1: 1 What is your highest level of education",
+#   wherelive = "01-10: 10 Where does your family currently live?" ,
+#   employment = "01-2: 2 What is your current employment status?"    ,
+#   maritalstatus = "01-3: 3 What is the marital status of the adults?"    ,
 #   income = "01-4: 4 What was your total FAMILY INCOME in the last 12 months?",
-#   smoke = "01-5: 5 Does anyone in your household smoke?"   ,                 
+#   smoke = "01-5: 5 Does anyone in your household smoke?"   ,
 #   childrenhouse = "01-6: 6 How many children in your household are 0-5 years old?"  ,
 #   householdmems = "01-7: 7 How many family members live in your household? (incl_ a",
 #   health = "01-8: 8 Do all family members in your home have health coverage" ,
-#   pregmom = "01-9: 9 Is there an expectant mother in the home?", 
+#   pregmom = "01-9: 9 Is there an expectant mother in the home?",
 #   ProgramTitle = `Program Title`)
 # 
-# family <- family %>% 
-#   group_by(FamilyID, ClientID, `Assessment Date`, Question) %>% 
-#   select(-`Answer Value`, -`Answer Memo`) %>% 
-#   mutate(dups = n()) %>% 
-#   mutate(rank = rank(row_number())) %>% 
+# family <- family %>%
+#   group_by(FamilyID, ClientID, `Assessment Date`, Question) %>%
+#   select(-`Answer Value`, -`Answer Memo`) %>%
+#   mutate(dups = n()) %>%
+#   mutate(rank = rank(row_number())) %>%
 #   select(-dups)
 # 
 # 
-# familyspread <- spread(family, Question, Answer) 
+# familyspread <- spread(family, Question, Answer)
 # 
-# familyspread <- familyspread %>% 
+# familyspread <- familyspread %>%
 #   rename(health = `Do all family members in your home have health coverage such as insurance throuhg work, MediCal (Gold Coast), or other insurance?`,
 #          smoke = `Does anyone in your household smoke?`,
 #          childrenhouse = `How many children in your household are 0-5 years old?`,
@@ -83,114 +83,114 @@ kids17 <- read_xls("~/Google Drive/SI/DataScience/Side projects/Ventura Preschoo
 #          education = `What is your highest level of education`,
 #          income = `What was your total FAMILY INCOME in the last 12 months?`,
 #          wherelive = `Where does your family currently live?`) %>%
-#   distinct() %>% 
+#   distinct() %>%
 #   rename(ProgramTitle = `Client Program Title`)
 # 
 # newfamily <- bind_rows(missing, familyspread)
 # 
-# oldform <- oldform %>% 
-#   select(-`Answer Memo`) %>% 
-#   mutate(Answer2 = ifelse(is.na(Answer), `Answer Value`, Answer)) %>% 
+# oldform <- oldform %>%
+#   select(-`Answer Memo`) %>%
+#   mutate(Answer2 = ifelse(is.na(Answer), `Answer Value`, Answer)) %>%
 #   select(-Answer, -`Answer Value`)
 # 
-# oldform <- oldform %>% 
-#   group_by(FamilyID, ClientID, `Assessment Date`, Question) %>% 
-#   mutate(dups = n()) %>% 
-#   mutate(rank = rank(row_number())) %>% 
+# oldform <- oldform %>%
+#   group_by(FamilyID, ClientID, `Assessment Date`, Question) %>%
+#   mutate(dups = n()) %>%
+#   mutate(rank = rank(row_number())) %>%
 #   select(-dups)
 # 
 # oldformspread <- spread(oldform, Question, Answer2)
 # 
-# oldformspread <- oldformspread %>% 
+# oldformspread <- oldformspread %>%
 #   rename(marital = `Marital status?`,
 #          employment = `Employment status?`,
 #          education = `Have high school diploma/GED?`,
 #          income = `Income Level`,
 #          childrenhouse = `Total # of children in house between 0-5`,
 #          householdmems = `Total # of family members in house`) %>%
-#   select(1:12, marital, employment, education, income, childrenhouse, householdmems) %>% 
+#   select(1:12, marital, employment, education, income, childrenhouse, householdmems) %>%
 #   rename(`ProgramTitle` = `Client Program Title`)
 # 
 # familycombined <- bind_rows(newfamily, oldformspread)
 # 
-# familycombined <- familycombined %>% 
-#   select(-`Contract Number`, -`Client Type`, -`Enrollment Date`, -LastServiceDate, -`Assessment Entered By`, -rank) %>% 
+# familycombined <- familycombined %>%
+#   select(-`Contract Number`, -`Client Type`, -`Enrollment Date`, -LastServiceDate, -`Assessment Entered By`, -rank) %>%
 #   distinct()
 # 
-# kids14 <- kids14 %>% 
+# kids14 <- kids14 %>%
 #   select(-X__1)
 # 
-# kids15 <- kids15 %>% 
-#   select(-X__1, -X__2) 
-# 
-# kids16 <- kids16 %>% 
+# kids15 <- kids15 %>%
 #   select(-X__1, -X__2)
 # 
-# kids17 <- kids17 %>% 
+# kids16 <- kids16 %>%
+#   select(-X__1, -X__2)
+# 
+# kids17 <- kids17 %>%
 #   select(-X__1)
 # 
-# kidsappend <- bind_rows(kids14, kids15) 
+# kidsappend <- bind_rows(kids14, kids15)
 # kidsappend <- bind_rows(kidsappend, kids16)
 # kidsappend <- bind_rows(kidsappend, kids17)
 # 
-# kidsappend <- kidsappend %>% 
+# kidsappend <- kidsappend %>%
 #   select(-14:-19)
 # 
 # preschool <- kidsappend
 # 
 # family_intake <- familycombined
-```
-
-```{r}
+# ```
+# 
+# ```{r}
 # 
 # ## get the dates in the same format
 # preschool$`Enrollment Date_` <- as.Date(preschool$`Enrollment Date_`, "%m/%d/%Y")
 # #preschool$`Exited Date` <- as.Date(preschool$`Service EndDate`, "%m/%d/%Y")
 # 
 # ##I want to know the year of enrollment, so i'm creating a "year" variable
-# preschool <- preschool %>% 
-#   mutate(school_year = year(`Enrollment Date_`)) 
+# preschool <- preschool %>%
+#   mutate(school_year = year(`Enrollment Date_`))
 # 
-# ## this dataset has a bunch of repeat rows. I want to filter those out. 
-# # preschool <- preschool %>% 
-# #   group_by(`Program Title`, ClientID, Zip, school_year) %>% 
-# #   mutate(count = n()) %>% 
-# #   mutate(rank = rank(`Enrollment Date_`)) %>% 
+# ## this dataset has a bunch of repeat rows. I want to filter those out.
+# # preschool <- preschool %>%
+# #   group_by(`Program Title`, ClientID, Zip, school_year) %>%
+# #   mutate(count = n()) %>%
+# #   mutate(rank = rank(`Enrollment Date_`)) %>%
 # #   filter(rank==1)
 # 
-# preschool <- preschool %>% 
-#   group_by(`Program Title`, ClientID, Zip, school_year) %>% 
-#   mutate(count = n()) %>% 
-#   mutate(rank = rank(`Enrollment Date_`)) 
+# preschool <- preschool %>%
+#   group_by(`Program Title`, ClientID, Zip, school_year) %>%
+#   mutate(count = n()) %>%
+#   mutate(rank = rank(`Enrollment Date_`))
 # 
 # ### collapse all ethnicities besides white/latino/other
-# preschool <- preschool %>% 
-#     mutate(Ethnicity = as.factor(Ethnicity)) 
+# preschool <- preschool %>%
+#     mutate(Ethnicity = as.factor(Ethnicity))
 # 
-# preschool <- preschool %>% 
-#     mutate(Ethnicity= (fct_collapse(Ethnicity, "Other" = c("01. Alaskan Native / American Indian", "02. Asian", "03. Black / African American", "05. Vietnamese", "06. Pacific Islander", "08. Multiracial", "09. Other", "10. Don't know/Declined")))) 
+# preschool <- preschool %>%
+#     mutate(Ethnicity= (fct_collapse(Ethnicity, "Other" = c("01. Alaskan Native / American Indian", "02. Asian", "03. Black / African American", "05. Vietnamese", "06. Pacific Islander", "08. Multiracial", "09. Other", "10. Don't know/Declined"))))
 # 
 # 
-# preschool <- preschool %>% 
-#     mutate(Language= (fct_collapse(Language, "Other" = c("03. Mixteco", "05. Vietnamese", "07. Mandarin (Putonghua)", "09. Filipino(Tagalog)", "10. Other", "11. Arabic", "13. Chinese", "15. Unknown", "16. Decline to Answer", "06. Korean", "14. Other", "08. Farsi (Persian)", "12. Cambodian", "04. Hmong", "11. Don't Know/Declined")))) 
+# preschool <- preschool %>%
+#     mutate(Language= (fct_collapse(Language, "Other" = c("03. Mixteco", "05. Vietnamese", "07. Mandarin (Putonghua)", "09. Filipino(Tagalog)", "10. Other", "11. Arabic", "13. Chinese", "15. Unknown", "16. Decline to Answer", "06. Korean", "14. Other", "08. Farsi (Persian)", "12. Cambodian", "04. Hmong", "11. Don't Know/Declined"))))
 # 
 # family_intake$Assessment_Date <- as.Date(family_intake$Assessment_Date, "%m/%d/%Y")
 # 
 # ##I want to know the year of enrollment, so i'm creating a "year" variable
-# family_intake <- family_intake %>% 
-#   mutate(school_year = year(`Assessment_Date`)) 
+# family_intake <- family_intake %>%
+#   mutate(school_year = year(`Assessment_Date`))
 # 
-# family_intake <- family_intake %>% 
-#   group_by(`ProgramTitle`, ClientID, Zip, school_year) %>% 
-#   mutate(count = n()) %>% 
-#   mutate(rank = rank(`Assessment_Date`)) 
+# family_intake <- family_intake %>%
+#   group_by(`ProgramTitle`, ClientID, Zip, school_year) %>%
+#   mutate(count = n()) %>%
+#   mutate(rank = rank(`Assessment_Date`))
 # 
-# family_intake <- family_intake %>% 
-#     mutate(Ethnicity= (fct_collapse(Ethnicity, "Other" = c("01. Alaskan Native / American Indian", "02. Asian", "03. Black / African American", "05. Vietnamese", "06. Pacific Islander", "08. Multiracial", "09. Other", "10. Don't know/Declined")))) 
+# family_intake <- family_intake %>%
+#     mutate(Ethnicity= (fct_collapse(Ethnicity, "Other" = c("01. Alaskan Native / American Indian", "02. Asian", "03. Black / African American", "05. Vietnamese", "06. Pacific Islander", "08. Multiracial", "09. Other", "10. Don't know/Declined"))))
 # 
 # 
-# family_intake <- family_intake %>% 
-#     mutate(Language= (fct_collapse(Language, "Other" = c("03. Mixteco", "05. Vietnamese", "07. Mandarin (Putonghua)", "09. Filipino(Tagalog)", "10. Other", "11. Arabic", "13. Chinese", "15. Unknown", "16. Decline to Answer", "06. Korean", "14. Other", "08. Farsi (Persian)", "12. Cambodian", "04. Hmong")))) 
+# family_intake <- family_intake %>%
+#     mutate(Language= (fct_collapse(Language, "Other" = c("03. Mixteco", "05. Vietnamese", "07. Mandarin (Putonghua)", "09. Filipino(Tagalog)", "10. Other", "11. Arabic", "13. Chinese", "15. Unknown", "16. Decline to Answer", "06. Korean", "14. Other", "08. Farsi (Persian)", "12. Cambodian", "04. Hmong"))))
 # 
 # write_rds(preschool, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/preschooldatacleaned.rds")
 # write_rds(family_intake, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/family_intakecleaned.rds")
@@ -507,6 +507,19 @@ preschooldistinct %>%
    group_by(school_year) %>%
   summarise(count = n()) %>% 
    kable()
+
+preschoolexp <- preschool %>% 
+ mutate(month = month(`Enrollment Date_`)) %>% 
+ mutate(year = year(`Enrollment Date_`)) %>% 
+  group_by(ClientID, year, month) %>% 
+  distinct()
+  
+
+
+preschoolexp %>% 
+  ungroup() %>% 
+  count(year, month) %>% 
+  filter(year==2016 | year==2017)
 ```
 
 Table 1. Total Preschoolers Served by First5 Ventura by Year
