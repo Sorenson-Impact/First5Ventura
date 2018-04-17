@@ -206,6 +206,14 @@ poverty_merged<- geo_join(tracts, poverty_df, "GEOID", "GEOID")
 # Exclude no land tracts
 poverty_merged <- poverty_merged[poverty_merged$ALAND>0,]
 
+schooldistrictunified <- school_districts(state = 'CA', type = "elementary")
+
+geodistrict <- geo.make(state=c("CA"), 
+                school.district.elementary = "*") 
+
+schooldistrict <- schooldistrictunified[schooldistrictunified$GEOID %in% c("629220"),]
+
+
 # make the pop up
 popup <- paste0("GEOID: ", poverty_merged$GEOID, "<br>", "Percent of Households w/ Children using SNAP/Food Stamps ", poverty_merged$percent)
 pal <- colorNumeric(
