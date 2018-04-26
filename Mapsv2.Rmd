@@ -10,15 +10,12 @@ date: "Updated April 2018"
 
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE, include=FALSE}
-library(tidyverse)
 library(plyr)
 library(readxl)
 library(tigris)
 library(acs)
 library(stringr)
 library(leaflet)
-library(ggplot2)
-library(tidyr)
 library(ggmap)
 library(sp)
 library(data.table)
@@ -111,6 +108,7 @@ final_df <- qris_mg
 #write.xlsx(geocodes, "C:\\Users\\Dylan Wootton\\Desktop\\College\\Fall 2017\\Sorenson\\Data Science\\Ventura Preshool\\Preschool Project\\finalgeocodes.xlsx")
 ```
 
+
 ```{r echo = FALSE, message=FALSE, warning=FALSE, include=FALSE, results='hide'}
 #### Start the geocode analysis
 geocodes <- read_excel('~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/finalgeocodes1 .xlsx')
@@ -151,8 +149,8 @@ NA_df <- rbind(subset(QRSADRS1, is.na(lat)),subset(QRSADRS3, is.na(lat)),subset(
 
 ```
 
-# SNAP/Food Stamps 
-The following map displays ACS SNAP data and QRIS rated sites. 
+# QRIS Rated Preschool Sites
+The following map displays the QRIS rated preschool sites for Ventura County. 
 
 The legend of QRIS ratings is as follows: 
 
@@ -162,10 +160,27 @@ The legend of QRIS ratings is as follows:
 
 * Dark Red - QRIS rating of 4 or 5.
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+mapq<-leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+   # addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred')) %>%
+    addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
+    addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
+    addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
+  # addAwesomeMarkers(QRSADRS5$lng, QRSADRS5$lat, popup = QRSADRS5$site_name.x,popupOptions = popupOptions(style = list("color" = "black")), icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
+  addLayersControl(
+                   options = layersControlOptions(collapsed = FALSE))
+  #addMarkers(map_df$lng, map_df$lat, popup= map_df$site_name.x)
+  # dark red = 1, red = 2, darkblue = 3, blue = 4, light blue = 5
+  
+
+mapq
 
 
+```
 
-```{r echo = FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r echo = FALSE, message=FALSE, warning=FALSE, results=HIDE}
 # public assistance income could be an option. 
 # B19067
 
@@ -198,6 +213,9 @@ geo <- geo.make(state=c("CA"),
 
 poverty_df <- read_rds("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/poverty_df.rds")
 ```
+
+# SNAP/Food Stamps 
+The following map displays ACS data on the estimated percent of households with children who use SNAP for the tracts of Ventura County. Oxnard School District is outlined in bright red.  
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #look into toggles 
@@ -248,11 +266,65 @@ map<-leaflet() %>%
             position = "bottomright", 
             title = "Percent of Households<br>w/ Children using SNAP/Food Stamps",
             labFormat = labelFormat(suffix = "%")) %>%
+  addLayersControl(
+                   overlayGroups = c("SNAP"), 
+                   options = layersControlOptions(collapsed = FALSE))
+  #addMarkers(map_df$lng, map_df$lat, popup= map_df$site_name.x)
+  # dark red = 1, red = 2, darkblue = 3, blue = 4, light blue = 5
+  
+
+map
+```
+
+
+# SNAP w/ QRIS Preschools
+
+The following map displays ACS data on the estimated percent of households with children who use SNAP for the tracts of Ventura County, with QRIS rated preschool sites as toggles overlaying the ACS data. Oxnard School District is outlined in bright red.  
+
+The legend of QRIS ratings is as follows: 
+
+* Light Blue - QRIS rating of 1 or 2;
+
+* Dark Blue - QRIS rating of 3;
+
+* Dark Red - QRIS rating of 4 or 5.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# make the pop up
+popup <- paste0("GEOID: ", poverty_merged$GEOID, "<br>", "Percent of Households w/ Children using SNAP/Food Stamps ", poverty_merged$percent)
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = poverty_merged$percent
+)
+
+
+map<-leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = poverty_merged, 
+              group = "SNAP",
+              fillColor = ~pal(percent), 
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7, 
+              weight = 1, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+    addPolygons(data = schooldistrict, 
+              group = "SNAP",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal, 
+            values = poverty_merged$percent, 
+            position = "bottomright", 
+            title = "Percent of Households<br>w/ Children using SNAP/Food Stamps",
+            labFormat = labelFormat(suffix = "%")) %>%
 
   # addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred')) %>%
- ### addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
- ### addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
- ### addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
+    addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
+    addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
+    addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
   # addAwesomeMarkers(QRSADRS5$lng, QRSADRS5$lat, popup = QRSADRS5$site_name.x,popupOptions = popupOptions(style = list("color" = "black")), icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
   addLayersControl(
                    overlayGroups = c("SNAP"), 
@@ -262,19 +334,13 @@ map<-leaflet() %>%
   
 
 map
-
 ```
 
-# % of Federal Poverty Line
-The following map displays ACS % of Federal Poverty Line data and QRIS rated sites. 
 
-The legend of QRIS ratings is as follows: 
+# Percent of Individuals below the Federal Poverty Line
+The following map displays the ACS data by tract for the estimated percent of individuals in Ventura County below the Federal Poverty Line. Oxnard School District is outlined in red. 
 
-* Light Blue - QRIS rating of 1 or 2;
 
-* Dark Blue - QRIS rating of 3;
-
-* Dark Red - QRIS rating of 4 or 5.
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE, include=FALSE}
 ##### For Poverty 200% https://www.cde.ca.gov/sp/cd/ce/ltrgvnrapr2016.asp
@@ -332,6 +398,56 @@ map<-leaflet() %>%
               smoothFactor = 0.2,
               popup = popup,
               group = "% of Poverty Line") %>%
+      addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal, 
+            values = poverty_merged$percent, 
+            position = "bottomright", 
+            title = "Percent of Households<br> Below 150% of the Poverty Line",
+            labFormat = labelFormat(suffix = "%")) %>%
+   addLayersControl(
+                   overlayGroups = c("% of Poverty Line"), 
+                   options = layersControlOptions(collapsed = FALSE))
+map
+
+```
+
+
+# Percent of Individuals below the Federal Poverty Line with QRIS Sites
+The following map displays the ACS data by tract for the estimated percent of individuals in Ventura County below the Federal Poverty Line. Oxnard School District is outlined in red. data with the QRIS rated preschool sites overlaying the ACS data. 
+
+The legend of QRIS ratings is as follows: 
+
+* Light Blue - QRIS rating of 1 or 2;
+
+* Dark Blue - QRIS rating of 3;
+
+* Dark Red - QRIS rating of 4 or 5.
+
+```{r echo = FALSE, message=FALSE,warning=FALSE,dpi = 92}
+# Map in leaflet
+map<-leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = poverty_merged, 
+              fillColor = ~pal(percent), 
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7, 
+              weight = 1, 
+              smoothFactor = 0.2,
+              popup = popup,
+              group = "% of Poverty Line") %>%
+      addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
   addLegend(pal = pal, 
             values = poverty_merged$percent, 
             position = "bottomright", 
@@ -347,7 +463,8 @@ map
 
 ```
 
-# Map of Preschool Need in Ventura County As Calculated by Professor Damooie
+# Map of Preschool Need in Ventura County 
+The following map displays where the number of preschool spots needed in Ventura County by ZIP code. These numbers were calculated by Dr. Jamshid Damooei, Professor and Chair of the Economics Department at California Lutheran University. 
 
 ```{r map, echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -471,8 +588,8 @@ map33
 
 ```
 
-# Map of Preschool Supply in Ventura County As Calculated by Professor Damooie
-
+# Map of Preschool Supply in Ventura County 
+The following map displays the number of preschool spots existing in Ventura County by ZIP code. These numbers were calculated by Dr. Jamshid Damooei, Professor and Chair of the Economics Department at California Lutheran University. 
 
 ```{r supply, echo=FALSE, message=FALSE}
 
@@ -509,7 +626,8 @@ map34
 
 ```
 
-# Map of Preschool Gap in Ventura County As Calculated by Professor Damooie
+# Map of Preschool Gap in Ventura County 
+The following map displays the gap in preschool spots between the supply and demand that already exist in Ventura County by ZIP code. These numbers were calculated by Dr. Jamshid Damooei, Professor and Chair of the Economics Department at California Lutheran University. 
 
 ```{r gap, echo=FALSE, message=FALSE}
 
@@ -546,5 +664,34 @@ map35<-leaflet() %>%
             #labFormat = labelFormat(prefix = " ")
            ) 
 map35
+
+```
+
+```{r, echo=FALSE, message=FALSE}
+
+preschools <- read_csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Child Care Centers.csv")
+
+preschools <- preschools %>% 
+  slice(-248)
+
+preschools <- preschools %>% 
+  mutate(preschooltype = ifelse(!is.na(`CDE: State Preschool`) | !is.na(`CDE: All but State Preschool`) | !is.na(`First 5`) | !is.na(`Head Start`), "Subsidized",
+                                ifelse(!is.na(Private), "Private", NA)))
+
+preschools %>% count('preschooltype')
+
+preschools <- preschools %>% 
+  select(4:6, 12) 
+
+preschools <- preschools %>% 
+  mutate(business = as.character('Business Name'))
+
+#register_google(key = "AIzaSyBHRKd7OTxRbKvDOAFDnjMJtGRfBxZxyBk")
+
+#geocodes <- preschools %>% mutate_geocode(business)
+#write_rds(geocodes, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/bigpreschoolgeocodes.rds")
+
+geocodes <- read_rds("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/bigpreschoolgeocodes.rds")
+
 
 ```
