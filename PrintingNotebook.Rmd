@@ -211,7 +211,10 @@ schooldistrictunified <- school_districts(state = 'CA', type = "elementary")
 geodistrict <- geo.make(state=c("CA"), 
                 school.district.elementary = "*") 
 
-schooldistrict <- schooldistrictunified[schooldistrictunified$GEOID %in% c("629220"),]
+schooldistrict <- schooldistrictunified[schooldistrictunified$GEOID %in% c("0629220"),]
+
+# Exclude no land tracts
+schooldistrict <- schooldistrict[schooldistrict$ALAND>0,]
 
 
 # make the pop up
@@ -232,6 +235,13 @@ map<-leaflet() %>%
               weight = 1, 
               smoothFactor = 0.2,
               popup = popup) %>%
+    addPolygons(data = schooldistrict, 
+              group = "SNAP",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
   addLegend(pal = pal, 
             values = poverty_merged$percent, 
             position = "bottomright", 
@@ -239,9 +249,9 @@ map<-leaflet() %>%
             labFormat = labelFormat(suffix = "%")) %>%
 
   # addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred')) %>%
-  addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
-  addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
-  addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
+ ### addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
+ ### addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
+ ### addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
   # addAwesomeMarkers(QRSADRS5$lng, QRSADRS5$lat, popup = QRSADRS5$site_name.x,popupOptions = popupOptions(style = list("color" = "black")), icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
   addLayersControl(
                    overlayGroups = c("SNAP"), 
