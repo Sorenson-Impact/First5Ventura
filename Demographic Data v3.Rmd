@@ -587,6 +587,8 @@ oxpre <- distinct_rowstotal %>% filter(`Service Modality` %in% oxprelist)
 
 oxzip <- distinct_rowstotal %>% filter(Zip %in% oxziplist)
 
+# write_rds(distinct_rowstotal, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/distinctrowstotal.rds")
+
 ```
 
 <br>

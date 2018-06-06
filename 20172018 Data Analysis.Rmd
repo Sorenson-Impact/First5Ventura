@@ -1,0 +1,316 @@
+---
+title: "First 5 Ventura County 2017-2018 Preschool Slots"
+author: "Gwendolyn Reynolds"
+date: "June 2018"
+output:
+  word_document:
+    reference_docx: ~/Github/SI_Project_Template/template_files/report_template/mystyles.docx
+    fig_width: 6 
+    fig_height: 4 
+  html_document:
+    df_print: paged
+mainfont: Roboto
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+# Load packages 
+library(knitr)
+library(readxl)
+library(scales)
+library(anonymizer)
+library(lubridate)
+library(forcats)
+library(sorensonimpact)
+library(tidyverse)
+library(janitor)
+
+si_ggplot_theme_update() 
+theme_update(text = element_text(family = "Roboto"), axis.text = element_text(family = "Roboto"), strip.text = element_text(family = "Roboto"), axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+<br>
+
+![](../SI_Project_Template/template_files/report_template/SI_logo_new.png)
+
+<br>
+
+![](../SI_Project_Template/template_files/report_template/earth_map.jpeg)
+
+#### A report prepared by the data science team on behalf of First 5 Ventura.
+
+##### Pagebreak
+
+```{r read in data, include=FALSE}
+
+distinct_rowstotal <- read_rds("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/distinctrowstotal.rds")
+
+oxprelist <- c("04: Preschool (Sierra Linda)", "Preschool (Sierra Linda)", "02: Preschool (Harrington)", "Preschool (Harrington)", "06: Preschool (Elm)", "Preschool (Elm)", "Preschool (OSD)", "03: Preschool (Ramona)")
+
+oxziplist <- c("93030", "93033", "93035", "93041")
+
+distinct_rowstotal %>% ungroup() %>% count(`Service Modality`)
+
+oxpre <- distinct_rowstotal %>% filter(`Service Modality` %in% oxprelist)
+
+oxzip <- distinct_rowstotal %>% filter(Zip %in% oxziplist)
+
+```
+
+# Summary 
+
+We were asked to conduct a quick analysis of the income level of the 2017-2018 First 5 Ventura County preschool slots. 
+
+We calculated the Federal Poverty Level (FPL) for each preschooler for whom we had income and household size. Federal Poverty Level is a function of income level and household size. Our calculation is only an estimate of FPL, as we only had income buckets and not an exact number for yearly household income. 
+
+We also calculate the percent of the California Median Income for FFY 2017 for each preschooler in the 2017-2018 school year for whom we income and household size. The California State Median Income for FFY 2017 is taken from the LIHEAP Clearinghouse website, which is a division of the Department of Health and Human Services.https://liheapch.acf.hhs.gov/Tribes/Tables/povertytables/FY2017/casmi_tribal.htm
+
+### Number of Preschool Slots 2017-2018
+
+First 5 Ventura County funded a total of 659 slots in 2017-2018 (according to the data received from First 5 Ventura County). We have household income for 583 of those preschoolers and household size for 222 of those preschoolers. The following table and graph show the number of preschool slots funded by First 5 Ventura County by preschool name in 2017-2018. There were 170 slots categorized simply as "Preschool", without a specific preschool name included. 
+
+```{r , message=FALSE, warning=FALSE}
+
+# list the preschools
+
+distinct_rowstotal <-  distinct_rowstotal %>% 
+clean_names()
+
+#distinct_rowstotal %>% filter(school_year=="2017-2018") %>% filter(!is.na(householdmems)) %>%  count()
+
+# distinct_rowstotal %>% 
+#   count(service_modality)
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  mutate(preschool_names = str_remove_all(service_modality, "\\d+|\\.|\\:|\\{|\\(|\\}|\\)"), 
+         preschool_names = str_replace_all(preschool_names, "-", " "))
+
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  count(preschool_names) %>% 
+  kable(caption = "Preschool Slots in 2017-2018", col.names = c("Preschools", "Number of Slots"))
+
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  count(preschool_names) %>% 
+  ggplot(aes(x=preschool_names, y = n)) +
+  geom_col() +
+  ggtitle("Preschool Slots in 2017-2018") +
+  labs(x="", y="") +
+  coord_flip()
+
+```
+
+```{r, include=FALSE}
+acstable <- read_csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/acs2016_5yr_Poverty level.csv")
+
+acstable <- acstable %>% rename(Zip = name) %>% mutate(Group = "ACS")
+
+distinct_rowstotal2 <- distinct_rowstotal %>% 
+  filter(!is.na(income) & !is.na(householdmems)) %>% 
+  mutate("Under .50" = ifelse(fpl2<=0.50, 1, 0)) %>% 
+  mutate(".50 to .99" = ifelse(fpl2>0.50 & fpl2<=0.99, 1, 0)) %>% 
+  mutate("1.00 to 1.24" = ifelse(fpl2>=1.00 & fpl2<=1.24, 1, 0)) %>% 
+  mutate("1.25 to 1.49" = ifelse(fpl2>=1.25 & fpl2<=1.49, 1, 0)) %>% 
+  mutate("1.50 to 1.84" = ifelse(fpl2>=1.50 & fpl2<=1.84, 1, 0)) %>% 
+  mutate("1.85 to 1.99" = ifelse(fpl2>=1.85 & fpl2<=1.99, 1, 0)) %>% 
+  mutate("2.00 and over" = ifelse(fpl2>=2.00, 1, 0))
+
+sumofall <- distinct_rowstotal2 %>% 
+  ungroup() %>% 
+  rename(Zip = zip) %>% 
+  filter(Zip!=0) %>% 
+  filter(!is.na(Zip)) %>% 
+  select(Zip, 24:30) %>% 
+  group_by(Zip) %>% 
+  summarise(`Under .50` = sum(`Under .50`, na.rm = TRUE), ".50 to .99" = sum(`.50 to .99`, na.rm = TRUE), "1.00 to 1.24" = sum(`1.00 to 1.24`, na.rm = TRUE),  "1.25 to 1.49" = sum(`1.25 to 1.49`, na.rm = TRUE), "1.50 to 1.84" = sum(`1.50 to 1.84`, na.rm = TRUE), "1.85 to 1.99" = sum(`1.85 to 1.99`, na.rm = TRUE), "2.00 and over" = sum(`2.00 and over`, na.rm = TRUE)) %>% 
+  mutate(Group = "NfLFirst5")
+  
+comparison <- bind_rows(acstable, sumofall)
+
+comparison <- comparison %>% 
+  rowwise() %>% 
+  mutate(totalnfl = sum(c(`Under .50`, `.50 to .99`, `1.00 to 1.24`, `1.25 to 1.49`, `1.50 to 1.84`, `1.85 to 1.99`, `2.00 and over`))) 
+
+comparisonpercent <- comparison %>% 
+  ungroup() %>% 
+  mutate(Under50 = `Under .50`/totalnfl, "50to99" = `.50 to .99`/totalnfl, "1to124" = `1.00 to 1.24`/totalnfl, "125to149" = `1.25 to 1.49`/totalnfl, "150to184" = `1.50 to 1.84`/totalnfl, "185to199" = `1.85 to 1.99`/totalnfl, "200andover" = `2.00 and over`/totalnfl) %>% 
+    mutate(Under50 = `Under .50`/totalnfl, "50to99" = `.50 to .99`/totalnfl, "1to124" = `1.00 to 1.24`/totalnfl, "125to149" = `1.25 to 1.49`/totalnfl, "150to184" = `1.50 to 1.84`/totalnfl, "185to199" = `1.85 to 1.99`/totalnfl, "200andover" = `2.00 and over`/totalnfl) %>% 
+  select(Zip, Group, 21:27)
+
+### california state median income by family size
+distinct_rowstotal <- distinct_rowstotal %>% 
+  mutate(caliguide = ifelse(householdmems==1, 41838, 
+                    ifelse(householdmems==2, 54712, 
+                    ifelse(householdmems==3, 67585, 
+                    ifelse(householdmems==4, 80458, 
+                    ifelse(householdmems==5, 93331, 
+                    ifelse(householdmems==6, 106205, 
+                    ifelse(householdmems==7, 109390, 
+                    ifelse(householdmems==8, 112671, 
+                    ifelse(householdmems==9, 116051, 
+                    ifelse(householdmems==10, 119532, 
+                    ifelse(householdmems==11, 123118, NA))))))))))))
+
+distinct_rowstotal <- distinct_rowstotal %>% 
+  mutate(calmedinc = (income2/caliguide)*100) %>% 
+  filter(school_year>=2014) %>% 
+  mutate(calmedinc2 = income2/caliguide)
+
+```
+
+### Federal Poverty Level by Preschool
+
+The following graphs visual the FPL by preschool for the 2017-2018 school year. 
+
+The first graph visualizes the mean federal poverty level by preschool. The second graph shows a scatterplot of the FPL for each preschool, except those who fall under a generic "preschool" label. The third graph shows a scatterplot of the FPL for the generic "preschool" label.  
+
+```{r, message=FALSE, warning=FALSE}
+
+#distinct_rowstotal %>% filter(school_year=="2017-2018") %>% filter(preschool_names!="Preschool") %>% count()
+
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  group_by(preschool_names) %>% 
+  summarise(meanfpl = mean(fpl, na.rm = T)) %>% 
+  ggplot(aes(x = preschool_names, y = meanfpl)) +
+  geom_col()+
+  coord_flip() +
+  ggtitle("Mean % FPL by Preschool in 2017-2018") +
+  labs(x="", y="")
+  
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  filter(!is.na(fpl)) %>% 
+  filter(preschool_names!="Preschool") %>% 
+  count(preschool_names, fpl) %>% 
+  ggplot(aes(x = fpl, y = n)) +
+  geom_point(position = "jitter")+
+  ggtitle("Federal Poverty Level by Preschool 2017-2018") +
+  labs(x="% Federal Povery Level", y="")+
+  facet_wrap(~preschool_names)
+
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  filter(!is.na(fpl)) %>% 
+  filter(preschool_names=="Preschool") %>% 
+  count(preschool_names, fpl) %>% 
+  ggplot(aes(x = fpl, y = n)) +
+  geom_point(position = "jitter")+
+  ggtitle("% Federal Poverty Level for Uncategorized 2017-2018") +
+  labs(x="% Federal Povery Level", y="")
+  #facet_wrap(~preschool_names)
+
+```
+
+### California State Median Income Level by Preschool
+
+The following graphs calculate the percent of the California Median Income for FFY 2017 for each preschool in the 2017-2018 school year. The California State Median Income for FFY 2017 is taken from the LIHEAP Clearinghouse website, which is a division of the Department of Health and Human Services.[(https://liheapch.acf.hhs.gov/Tribes/Tables/povertytables/FY2017/casmi_tribal.htm)]
+
+The first graph visualizes the mean California State Median Income Level by preschool. The second graph shows a scatterplot of the California State Median Income Level for each preschool, except those who fall under a generic "preschool" label. The third graph shows a scatterplot of the California State Median Income Level for the generic "preschool" label.  
+
+```{r, message=FALSE, warning=FALSE}
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  group_by(preschool_names) %>% 
+  summarise(meancalmed = mean(calmedinc, na.rm = T)) %>% 
+  ggplot(aes(x = preschool_names, y = meancalmed)) +
+  geom_col()+
+  geom_hline(yintercept = 70, color = "orange")+
+  coord_flip() +
+  ggtitle("Mean % of California Median Income by HH Size 2017-2018") +
+  labs(x="", y="")
+  
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  filter(!is.na(calmedinc)) %>% 
+  filter(preschool_names!="Preschool") %>% 
+  count(preschool_names, calmedinc) %>% 
+  ggplot(aes(x = calmedinc, y = n)) +
+  geom_vline(xintercept = 70, color = "orange")+
+  geom_point(position = "jitter")+
+  ggtitle("% California Median Income by Preschool 2017-2018") +
+  labs(x="% CA State Median Income", y="")+
+  facet_wrap(~preschool_names)
+
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  filter(!is.na(calmedinc)) %>% 
+  filter(preschool_names=="Preschool") %>% 
+  count(preschool_names, calmedinc) %>% 
+  ggplot(aes(x = calmedinc, y = n)) +
+  geom_vline(xintercept = 70, color = "orange")+
+  geom_point(position = "jitter")+
+  ggtitle("% California Median Income for Uncategorized 2017-2018") +
+  labs(x="% CA State Median Income", y="")
+```
+
+### Federal Poverty Level by ZIP Code
+
+The following graphs visual the FPL by ZIP Code for the 2017-2018 school year. The first graph shows the mean federal poverty level by ZIP code. The second graph shows a scatterplot of the FPL for each ZIP Code. 
+
+
+```{r, message=FALSE, warning=FALSE}
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  mutate(zip = as.factor(zip)) %>% 
+  group_by(zip) %>% 
+  summarise(meancalmed = mean(fpl, na.rm = T)) %>% 
+  ggplot(aes(x = zip, y = meancalmed)) +
+  geom_col()+
+ # geom_hline(yintercept = 70, color = "orange")+
+  coord_flip() +
+  ggtitle("Mean % of Federal Poverty Level 2017-2018") +
+  labs(x="", y="")
+  
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  filter(!is.na(calmedinc)) %>% 
+  count(zip, calmedinc) %>% 
+  ggplot(aes(x = calmedinc, y = n)) +
+  #geom_vline(xintercept = 70, color = "orange")+
+  geom_point(position = "jitter")+
+  ggtitle("% Federal Poverty Level by Zip 2017-2018") +
+  labs(x="% FPL", y="")+
+  facet_wrap(~zip)
+```
+
+### California State Median Income Level by ZIP Code
+
+The following graphs visual the California State Median Income Level by ZIP Code for the 2017-2018 school year. The first graph shows the mean California State Median Income Level by ZIP code. The second graph shows a scatterplot of the California State Median Income Level for each ZIP Code. 
+
+```{r, message=FALSE, warning=FALSE}
+
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  mutate(zip = as.factor(zip)) %>% 
+  group_by(zip) %>% 
+  summarise(meancalmed = mean(calmedinc, na.rm = T)) %>% 
+  ggplot(aes(x = zip, y = meancalmed)) +
+  geom_col()+
+  geom_hline(yintercept = 70, color = "orange")+
+  coord_flip() +
+  ggtitle("Mean % of California Median Income by HH Size 2017-2018") +
+  labs(x="", y="")
+  
+distinct_rowstotal %>% 
+  filter(school_year=="2017-2018") %>% 
+  filter(!is.na(calmedinc)) %>% 
+  count(zip, calmedinc) %>% 
+  ggplot(aes(x = calmedinc, y = n)) +
+  geom_vline(xintercept = 70, color = "orange")+
+  geom_point(position = "jitter")+
+  ggtitle("% California Median Income by Zip 2017-2018") +
+  labs(x="% CA State Median Income", y="")+
+  facet_wrap(~zip)
+
+
+
+
+```

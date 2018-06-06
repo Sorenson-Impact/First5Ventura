@@ -1,5 +1,5 @@
 ---
-title: "Ventura QRIS Maps"
+title:  "Geospatial Analysis for First 5 Ventura County"
 output:
   html_document: default
   html_notebook: default
@@ -10,7 +10,6 @@ date: "Updated April 2018"
 
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE, include=FALSE}
-library(plyr)
 library(readxl)
 library(tigris)
 library(acs)
@@ -20,7 +19,13 @@ library(ggmap)
 library(sp)
 library(data.table)
 library(tidyverse)
+library(plyr)
 
+#knitr::opts_chunk$set(cache=TRUE)
+
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, include=FALSE}
 
 ## Extract all data from excel sheets into one list of df
 path <- "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/CDF_data.xlsx"
@@ -109,7 +114,7 @@ final_df <- qris_mg
 ```
 
 
-```{r echo = FALSE, message=FALSE, warning=FALSE, include=FALSE, results='hide'}
+```{r echo = FALSE, message=FALSE, warning=FALSE, include=FALSE, include=FALSE}
 #### Start the geocode analysis
 geocodes <- read_excel('~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/finalgeocodes1 .xlsx')
 
@@ -169,8 +174,7 @@ mapq<-leaflet() %>%
     addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
     addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
   # addAwesomeMarkers(QRSADRS5$lng, QRSADRS5$lat, popup = QRSADRS5$site_name.x,popupOptions = popupOptions(style = list("color" = "black")), icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
-  addLayersControl(
-                   options = layersControlOptions(collapsed = FALSE))
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
   #addMarkers(map_df$lng, map_df$lat, popup= map_df$site_name.x)
   # dark red = 1, red = 2, darkblue = 3, blue = 4, light blue = 5
   
@@ -180,7 +184,7 @@ mapq
 
 ```
 
-```{r echo = FALSE, message=FALSE, warning=FALSE, results=HIDE}
+```{r echo = FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # public assistance income could be an option. 
 # B19067
 
@@ -217,7 +221,7 @@ poverty_df <- read_rds("~/Google Drive/SI/DataScience/Side projects/Ventura Pres
 # SNAP/Food Stamps 
 The following map displays ACS data on the estimated percent of households with children who use SNAP for the tracts of Ventura County. Oxnard School District is outlined in bright red.  
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 #look into toggles 
 # Merge 
 poverty_merged<- geo_join(tracts, poverty_df, "GEOID", "GEOID")
@@ -234,9 +238,10 @@ schooldistrict <- schooldistrictunified[schooldistrictunified$GEOID %in% c("0629
 
 # Exclude no land tracts
 schooldistrict <- schooldistrict[schooldistrict$ALAND>0,]
+```
 
-
-# make the pop up
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#make the pop up
 popup <- paste0("GEOID: ", poverty_merged$GEOID, "<br>", "Percent of Households w/ Children using SNAP/Food Stamps ", poverty_merged$percent)
 pal <- colorNumeric(
   palette = "YlGnBu",
@@ -266,9 +271,8 @@ map<-leaflet() %>%
             position = "bottomright", 
             title = "Percent of Households<br>w/ Children using SNAP/Food Stamps",
             labFormat = labelFormat(suffix = "%")) %>%
-  addLayersControl(
-                   overlayGroups = c("SNAP"), 
-                   options = layersControlOptions(collapsed = FALSE))
+
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
   #addMarkers(map_df$lng, map_df$lat, popup= map_df$site_name.x)
   # dark red = 1, red = 2, darkblue = 3, blue = 4, light blue = 5
   
@@ -290,7 +294,7 @@ The legend of QRIS ratings is as follows:
 * Dark Red - QRIS rating of 4 or 5.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# make the pop up
+#make the pop up
 popup <- paste0("GEOID: ", poverty_merged$GEOID, "<br>", "Percent of Households w/ Children using SNAP/Food Stamps ", poverty_merged$percent)
 pal <- colorNumeric(
   palette = "YlGnBu",
@@ -326,9 +330,7 @@ map<-leaflet() %>%
     addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
     addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
   # addAwesomeMarkers(QRSADRS5$lng, QRSADRS5$lat, popup = QRSADRS5$site_name.x,popupOptions = popupOptions(style = list("color" = "black")), icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
-  addLayersControl(
-                   overlayGroups = c("SNAP"), 
-                   options = layersControlOptions(collapsed = FALSE))
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
   #addMarkers(map_df$lng, map_df$lat, popup= map_df$site_name.x)
   # dark red = 1, red = 2, darkblue = 3, blue = 4, light blue = 5
   
@@ -410,9 +412,11 @@ map<-leaflet() %>%
             position = "bottomright", 
             title = "Percent of Households<br> Below 150% of the Poverty Line",
             labFormat = labelFormat(suffix = "%")) %>%
-   addLayersControl(
-                   overlayGroups = c("% of Poverty Line"), 
-                   options = layersControlOptions(collapsed = FALSE))
+   # addLayersControl(
+   #                 overlayGroups = c("% of Poverty Line"), 
+   #                 options = layersControlOptions(collapsed = FALSE)) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
 map
 
 ```
@@ -456,9 +460,11 @@ map<-leaflet() %>%
   addAwesomeMarkers(QRSADRS1$lng, QRSADRS1$lat, popup = QRSADRS1$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'lightblue'))%>%
   addAwesomeMarkers(QRSADRS3$lng, QRSADRS3$lat, popup = QRSADRS3$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkblue'))%>%
   addAwesomeMarkers(QRSADRS4$lng, QRSADRS4$lat, popup = QRSADRS4$site_name.x, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'darkred'))%>%
-  addLayersControl(
-                   overlayGroups = c("% of Poverty Line"), 
-                   options = layersControlOptions(collapsed = FALSE))
+  # addLayersControl(
+  #                  overlayGroups = c("% of Poverty Line"), 
+  #                  options = layersControlOptions(collapsed = FALSE)) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
 map
 
 ```
@@ -575,12 +581,21 @@ map33<-leaflet() %>%
               weight = 1, 
               smoothFactor = 0.2,
               popup = popup) %>%
+  addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
   addLegend(pal = pal, 
             values = consult_merged$Total.need, 
             position = "bottomright", 
             title = "Total Need by Zipcode"#,
             #labFormat = labelFormat(prefix = " ")
-           ) 
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
 map33
 
 
@@ -616,12 +631,21 @@ map34<-leaflet() %>%
               weight = 1, 
               smoothFactor = 0.2,
               popup = popup) %>%
+  addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
   addLegend(pal = pal, 
             values = consult_merged2$Total.supply..spaces., 
             position = "bottomright", 
             title = "Total Supply by Zipcode"#,
             #labFormat = labelFormat(prefix = " ")
-           ) 
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
 map34
 
 ```
@@ -657,41 +681,864 @@ map35<-leaflet() %>%
               weight = 1, 
               smoothFactor = 0.2,
               popup = popup) %>%
+  addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
   addLegend(pal = pal, 
             values = consult_merged3$gap, 
             position = "bottomright", 
             title = "Total Gap by Zipcode"#,
             #labFormat = labelFormat(prefix = " ")
-           ) 
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
 map35
 
 ```
 
 ```{r, echo=FALSE, message=FALSE}
 
-preschools <- read_csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Child Care Centers.csv")
-
-preschools <- preschools %>% 
-  slice(-248)
-
-preschools <- preschools %>% 
-  mutate(preschooltype = ifelse(!is.na(`CDE: State Preschool`) | !is.na(`CDE: All but State Preschool`) | !is.na(`First 5`) | !is.na(`Head Start`), "Subsidized",
-                                ifelse(!is.na(Private), "Private", NA)))
-
-preschools %>% count('preschooltype')
-
-preschools <- preschools %>% 
-  select(4:6, 12) 
-
-preschools <- preschools %>% 
-  mutate(business = as.character('Business Name'))
-
-#register_google(key = "AIzaSyBHRKd7OTxRbKvDOAFDnjMJtGRfBxZxyBk")
-
-#geocodes <- preschools %>% mutate_geocode(business)
-#write_rds(geocodes, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/bigpreschoolgeocodes.rds")
+# preschools <- read_csv("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/Child Care Centers.csv")
+# 
+# preschools <- preschools %>%
+#   slice(-248)
+# 
+# preschools <- preschools %>%
+#   mutate(preschooltype = ifelse(!is.na(`CDE: State Preschool`) | !is.na(`CDE: All but State Preschool`) | !is.na(`First 5`) | !is.na(`Head Start`), "Subsidized",
+#                                 ifelse(!is.na(Private), "Private", NA)))
+# 
+# preschools %>% count('preschooltype')
+# 
+# preschools <- preschools %>%
+#   select(4:6, 12)
+# 
+# preschools <- preschools %>%
+#   mutate(business = `Business Name`)
+# 
+# preschools2 <- preschools %>% # mutate to make site names match the names in qrisaddresses
+#   mutate(business = gsub("CDR - ", "", business)) %>%
+#   mutate(business = gsub("Cal-", "", business)) %>%
+#   mutate(business = gsub("CDI - ", "", business)) %>%
+#   mutate(business = gsub("CAPSLO - ", "", business)) %>%
+#   mutate(business = gsub("SAFE ", "", business)) %>%
+#   mutate(business = gsub("CDR/", "", business)) %>%
+#   mutate(business = gsub("CVUSD ‐ ", "", business)) %>%
+#   mutate(business = gsub("CVUSD - ", "", business)) %>%
+#   mutate(business = gsub("â€", "-", business)) %>%
+#   mutate(business = gsub("VUSD - ", "", business)) %>%
+#   mutate(business = gsub("FCC", "Family Child Care", business)) %>%
+#   mutate(business = gsub("MUSD", "", business)) %>%
+#   mutate(business = gsub("MUSD/", "", business)) %>%
+#   mutate(business = gsub("FUSD", "", business)) %>%
+#   mutate(business = gsub("FUSD", "", business)) %>%
+#   mutate(business = gsub("CDI/", "", business)) %>%
+#    mutate(business = gsub("CDR", "", business)) %>%
+#   mutate(business = gsub("/", " ", business))
+# 
+# preschools2 <- preschools2 %>% 
+#   dplyr::mutate(city = City) %>% 
+#   dplyr::mutate(zip = Zip)
+# 
+# preschools2 <- preschools2 %>% 
+#   unite("address", c("business", "city", "zip"), sep = " , ")
+# 
+#  geocodes <- preschools2 %>% mutate_geocode(address)
+# 
+#  write_rds(geocodes, "~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/bigpreschoolgeocodes.rds")
 
 geocodes <- read_rds("~/Google Drive/SI/DataScience/Side projects/Ventura Preschool /raw_data/bigpreschoolgeocodes.rds")
+
+geosub <- geocodes %>% 
+  filter(preschooltype=="Subsidized") %>% 
+  filter(`Business Name`!="CDR Head Start, Oak View Center") %>% 
+ mutate(business = `Business Name`)
+
+geopriv <- geocodes %>% 
+  filter(preschooltype=="Private") %>% 
+  mutate(business = `Business Name`) 
+
+```
+
+# Map of All Preschool Providers in Ventura County
+The map below shows all of the preschools in Ventura County. Red preschools are subsidized preschools, including CDE Preschools, First 5 funded preschools, and Head Starts. The blue preschools are private preschools. 
+
+
+```{r echo = FALSE, message=FALSE,warning=FALSE,dpi = 92}
+# Map in leaflet
+map<-leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addAwesomeMarkers(geosub$lon, geosub$lat, popup = geosub$business, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'red'))%>%
+  addAwesomeMarkers(geopriv$lon, geopriv$lat, popup = geopriv$business, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'blue'))%>%
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map
+
+```
+
+
+# Map of Preschool Gap in Ventura County with Preschools 
+The following map displays the gap in preschool spots between the supply and demand that already exist in Ventura County by ZIP code. These numbers were calculated by Dr. Jamshid Damooei, Professor and Chair of the Economics Department at California Lutheran University. We've overlaid all of the preschools in Ventura County over the gaps. Red preschools are subsidized preschools, including CDE Preschools, First 5 funded preschools, and Head Starts. The blue preschools are private preschools. 
+
+```{r echo = FALSE, message=FALSE,warning=FALSE}
+popup <- paste0("<b>", consult_merged3$ZCTA5CE10, "</b><br>", "Total Gap by Zipcode: ", prettyNum(consult_merged3$gap), big.mark=",")
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  reverse = TRUE,
+  domain = consult_merged3$gap
+)
+
+map35<-leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = consult_merged3, 
+              fillColor = ~pal(gap), 
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7, 
+              weight = 1, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal, 
+            values = consult_merged3$gap, 
+            position = "bottomright", 
+            title = "Total Gap by Zipcode"#,
+            #labFormat = labelFormat(prefix = " ")
+           ) %>% 
+addAwesomeMarkers(geosub$lon, geosub$lat, popup = geosub$business, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'red'))%>%
+  addAwesomeMarkers(geopriv$lon, geopriv$lat, popup = geopriv$business, icon = awesomeIcons(icon = "ion-university", library = 'fa', markerColor = 'blue'))%>%
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map35
+```
+
+
+## Median Household Income in Ventura County 
+We used ACS data (from 2015) to map the median household income for each tract in Ventura County. Oxnard School District is outlined in red.   
+
+
+```{r median income, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+income <- acs.fetch(endyear = 2015, span = 5, geography = geo, 
+                     table.number = "B19013", col.names = "pretty")
+
+#names(attributes(income))
+# [1] "endyear"        "span"           "acs.units"      "currency.year"  "modified"       "geography"      "acs.colnames"  
+# [8] "estimate"       "standard.error" "class"    
+
+#attr(income, "acs.colnames")
+
+#convert to data.frame for merging
+income_df <- data.frame(paste0(str_pad(income@geography$state, 2, "left", pad="0"), 
+                                str_pad(income@geography$county, 3, "left", pad = "0"), 
+                                 str_pad(income@geography$tract, 6, "left", pad = "0")), 
+                         income@estimate[,c("B19013. Median Household Income in the Past 12 Months (in 2015 Inflation-Adjusted Dollars): Median household income in the past 12 months (in 2015 Inflation-adjusted dollars)")],
+                         stringsAsFactors = FALSE)
+
+income_df <- select(income_df, 1:2)
+rownames(income_df)<-1:nrow(income_df)
+names(income_df)<-c("GEOID", "medianincome")
+#income_df$percent <- (100* (popunder5_df$threeand4/pop_df$totalpop))
+
+##time to merge
+
+income_merged<- geo_join(tracts, income_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#income_merged <- income_merged[income_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", income_merged$NAME, "</b><br>", "Median Household Income: ", prettyNum(round(income_merged$medianincome,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = income_merged$medianincome
+)
+
+map6 <- leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = income_merged, 
+              fillColor = ~pal(medianincome), 
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7, 
+              weight = 1, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+    addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal, 
+            values = income_merged$medianincome, 
+            position = "bottomright", 
+            title = "Median Household Income"#,
+            #labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+map6
+
+```
+
+## Ethnicty in Ventura County: White Alone 
+We used ACS data (from 2015) to map the percent of people who marked their race/ethnicty as White: Alone for each Ventura County tract. Oxnard School District is outlined in red.  
+
+```{r white people, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+race <- acs.fetch(endyear = 2015, span = 5, geography = geo,
+                     table.number = "B03002", col.names = "pretty")
+
+#names(attributes(race))
+# [1] "endyear"        "span"           "acs.units"      "currency.year"  "modified"       "geography"      "acs.colnames"
+# [8] "estimate"       "standard.error" "class"
+
+#attr(race, "acs.colnames")
+
+#convert to data.frame for merging
+race_df <- data.frame(paste0(str_pad(race@geography$state, 2, "left", pad="0"),
+                                str_pad(race@geography$county, 3, "left", pad = "0"),
+                                str_pad(race@geography$tract, 6, "left", pad = "0")),
+                         race@estimate[,c("Hispanic or Latino by Race: Total:", "Hispanic or Latino by Race: Not Hispanic or Latino: White alone", "Hispanic or Latino by Race: Hispanic or Latino:")],
+                         stringsAsFactors = FALSE)
+
+race_df <- select(race_df, 1:4)
+rownames(race_df)<-1:nrow(race_df)
+names(race_df)<-c("GEOID", "totalpop", "whitealone", "latino")
+race_df$percent <- (100* (race_df$whitealone/race_df$totalpop))
+
+##time to merge
+
+race_merged<- geo_join(tracts, race_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#race_merged <- race_merged[race_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", race_merged$NAME, "</b><br>", "Percent White (Alone): ", prettyNum(round(race_merged$percent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = race_merged$percent
+)
+
+map7<-leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = race_merged,
+              fillColor = ~pal(percent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+      addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = race_merged$percent,
+            position = "bottomright",
+            title = "Percent White Alone",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+map7
+
+```
+
+## Ethnicity in Venutra County: Hispanic/Latino
+We used ACS data (from 2015) to map the percent of people who marked their race/ethnicty as Hispanci/Latino for Ventura County tract. Oxnard School District is outlined in red.  
+
+
+```{r hispanic/latino people, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+# race <- acs.fetch(endyear = 2015, span = 1, geography = geo,
+#                      table.number = "C03002", col.names = "pretty")
+# 
+# #names(attributes(race))
+# # [1] "endyear"        "span"           "acs.units"      "currency.year"  "modified"       "geography"      "acs.colnames"
+# # [8] "estimate"       "standard.error" "class"
+# 
+# #attr(race, "acs.colnames")
+# 
+# #convert to data.frame for merging
+# race_df <- data.frame(paste0(str_pad(race@geography$state, 2, "left", pad="0"),
+#                                 #str_pad(population@geography$county, 3, "left", pad = "0"),
+#                                 str_pad(race@geography$schooldistrictunified, 5, "left", pad = "0")),
+#                          race@estimate[,c("Hispanic or Latino by Race: Total:", "Hispanic or Latino by Race: Not Hispanic or Latino: White alone", "Hispanic or Latino by Race: Hispanic or Latino")],
+#                          stringsAsFactors = FALSE)
+
+# race_df <- select(race_df, 1:4)
+# rownames(race_df)<-1:nrow(race_df)
+# names(race_df)<-c("GEOID", "totalpop", "whitealone", "latino")
+race_df$percent <- (100* (race_df$latino/race_df$totalpop))
+
+##time to merge
+
+race_merged<- geo_join(tracts, race_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#race_merged <- race_merged[race_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", race_merged$NAME, "</b><br>", "Percent Hispanic/Latino: ", prettyNum(round(race_merged$percent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = race_merged$percent
+)
+
+map8<-leaflet() %>%
+  #addMarkers(~long, ~lat, popup = ~as.character(Program.Name), label = ~as.character(Program.Name)) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = race_merged,
+              fillColor = ~pal(percent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+        addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = race_merged$percent,
+            position = "bottomright",
+            title = "Percent Hispanic/Latino",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map8
+
+```
+
+
+## Foreign Born in Ventura County
+We used ACS data (from 2015) to map the percent of people who are foreign born (as opposed to native born) for each Venutra County census tract. Oxnard School District is outlined in red.  
+
+```{r foreign born, echo=FALSE}
+
+foreign <- acs.fetch(endyear = 2015, span = 5, geography = geo,
+                     table.number = "B05012", col.names = "pretty")
+
+#names(attributes(race))
+# [1] "endyear"        "span"           "acs.units"      "currency.year"  "modified"       "geography"      "acs.colnames"
+# [8] "estimate"       "standard.error" "class"
+
+#attr(foreign, "acs.colnames")
+
+#convert to data.frame for merging
+foreign_df <- data.frame(paste0(str_pad(foreign@geography$state, 2, "left", pad="0"),
+                                str_pad(foreign@geography$county, 3, "left", pad = "0"),
+                                str_pad(foreign@geography$tract, 6, "left", pad = "0")),
+                         foreign@estimate[,c("Nativity in the United States: Total:", "Nativity in the United States: Native", "Nativity in the United States: Foreign-Born")],
+                         stringsAsFactors = FALSE)
+
+foreign_df <- select(foreign_df, 1:4)
+rownames(foreign_df)<-1:nrow(foreign_df)
+names(foreign_df)<-c("GEOID", "totalpop", "native", "foreign")
+foreign_df$foreignpercent <- (100* (foreign_df$foreign/foreign_df$totalpop))
+
+##time to merge
+
+foreign_merged<- geo_join(tracts, foreign_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#foreign_merged <- foreign_merged[foreign_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", foreign_merged$NAME, "</b><br>", "Percent Foreign Born: ", prettyNum(round(foreign_merged$foreignpercent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = foreign_merged$foreignpercent
+)
+
+map11<-leaflet() %>%
+  #addMarkers(~long, ~lat, popup = ~as.character(Program.Name), label = ~as.character(Program.Name)) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = foreign_merged,
+              fillColor = ~pal(foreignpercent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+          addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = foreign_merged$foreignpercent,
+            position = "bottomright",
+            title = "Percent Foreign Born",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map11
+
+```
+
+## Native Born in Ventura County
+We used ACS data (from 2015) to map the percent of people who are native born (as opposed to foreign born) for each Ventura County census tract. 
+
+```{r percent not foreign born, echo=FALSE}
+
+foreign_df$nativepercent <- (100* (foreign_df$native/foreign_df$totalpop))
+
+##time to merge
+
+foreign_merged<- geo_join(tracts, foreign_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#foreign_merged <- foreign_merged[foreign_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", foreign_merged$NAME, "</b><br>", "Percent Native Born: ", prettyNum(round(foreign_merged$nativepercent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = foreign_merged$nativepercent
+)
+
+map12<-leaflet() %>%
+  #addMarkers(~long, ~lat, popup = ~as.character(Program.Name), label = ~as.character(Program.Name)) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = foreign_merged,
+              fillColor = ~pal(nativepercent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+            addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = foreign_merged$nativepercent,
+            position = "bottomright",
+            title = "Percent Native Born",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map12
+
+
+```
+
+## Percent of Married Families in Ventura County 
+We used ACS data (from 2015) to map the percent of families with married heads of households for each Ventura County census tract. Oxnard School District is outlined in red.  
+
+```{r married families, echo=FALSE, message=FALSE}
+
+single <- acs.fetch(endyear = 2015, span = 5, geography = geo,
+                     table.number = "B09005", col.names = "pretty")
+
+#names(attributes(race))
+# [1] "endyear"        "span"           "acs.units"      "currency.year"  "modified"       "geography"      "acs.colnames"
+# [8] "estimate"       "standard.error" "class"
+
+#attr(single, "acs.colnames")
+
+#convert to data.frame for merging
+single_df <- data.frame(paste0(str_pad(single@geography$state, 2, "left", pad="0"),
+                                str_pad(single@geography$county, 3, "left", pad = "0"),
+                                str_pad(single@geography$tract, 6, "left", pad = "0")),
+                         single@estimate[,c("Household Type for Children Under 18 Years in Households (Excluding Householders, Spouses, and Unmarried Partners): Total:", "Household Type for Children Under 18 Years in Households (Excluding Householders, Spouses, and Unmarried Partners): In family households: In married-couple family", "Household Type for Children Under 18 Years in Households (Excluding Householders, Spouses, and Unmarried Partners): In family households: In male householder, no wife present, family", "Household Type for Children Under 18 Years in Households (Excluding Householders, Spouses, and Unmarried Partners): In family households: In female householder, no husband present, family")],
+                         stringsAsFactors = FALSE)
+
+single_df <- select(single_df, 1:5)
+rownames(single_df)<-1:nrow(single_df)
+names(single_df)<-c("GEOID", "totalpop", "married", "singlemale", "singlefemale")
+single_df$marriedpercent <- (100* (single_df$married/single_df$totalpop))
+
+##time to merge
+
+single_merged<- geo_join(tracts, single_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#single_merged <- single_merged[single_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", single_merged$NAME, "</b><br>", "Percent Family Type Married: ", prettyNum(round(single_merged$marriedpercent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = single_merged$marriedpercent
+)
+
+map13<-leaflet() %>%
+  #addMarkers(~long, ~lat, popup = ~as.character(Program.Name), label = ~as.character(Program.Name)) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = single_merged,
+              fillColor = ~pal(marriedpercent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+            addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = single_merged$marriedpercent,
+            position = "bottomright",
+            title = "Percent Family Type Married",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map13
+
+
+```
+
+## Percent of Single Families in Ventura County 
+We used ACS data (from 2015) to map the percent of families with single heads of households for each Ventura County census tract. Oxnard School District is outlined in red. 
+
+```{r single families, echo=FALSE}
+single_df$singlepercent <- (100* ((single_df$singlemale + single_df$singlefemale)/single_df$totalpop))
+
+##time to merge
+
+single_merged<- geo_join(tracts, single_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#single_merged <- single_merged[single_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", single_merged$NAME, "</b><br>", "Percent Family Type Single: ", prettyNum(round(single_merged$singlepercent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = single_merged$singlepercent
+)
+
+map14<-leaflet() %>%
+  #addMarkers(~long, ~lat, popup = ~as.character(Program.Name), label = ~as.character(Program.Name)) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = single_merged,
+              fillColor = ~pal(singlepercent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+            addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = single_merged$singlepercent,
+            position = "bottomright",
+            title = "Percent Family Type: Single",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map14
+
+
+
+```
+
+## Percent Unemployed in Ventura County
+We used ACS data (from 2015) to map the percent of people unemployed for each Ventura County census tract. Oxnard School District is outline in red. 
+
+```{r unemployment, echo=FALSE}
+
+unemployment <- acs.fetch(endyear = 2015, span = 5, geography = geo,
+                     table.number = "B23025", col.names = "pretty")
+
+#names(attributes(race))
+# [1] "endyear"        "span"           "acs.units"      "currency.year"  "modified"       "geography"      "acs.colnames"
+# [8] "estimate"       "standard.error" "class"
+
+#attr(unemployment, "acs.colnames")
+
+#convert to data.frame for merging
+unemploy_df <- data.frame(paste0(str_pad(unemployment@geography$state, 2, "left", pad="0"),
+                                str_pad(unemployment@geography$county, 3, "left", pad = "0"),
+                                str_pad(unemployment@geography$tract, 6, "left", pad = "0")),
+                         unemployment@estimate[,c("Employment Status for the Population 16 Years and Over: Total:", "Employment Status for the Population 16 Years and Over: In labor force: Civilian labor force: Unemployed")],
+                         stringsAsFactors = FALSE)
+
+unemploy_df <- select(unemploy_df, 1:3)
+rownames(unemploy_df)<-1:nrow(unemploy_df)
+names(unemploy_df)<-c("GEOID", "totalpop", "unemploy")
+unemploy_df$percent <- (100* (unemploy_df$unemploy/unemploy_df$totalpop))
+
+##time to merge
+
+unemploy_merged<- geo_join(tracts, unemploy_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#unemploy_merged <- unemploy_merged[unemploy_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", unemploy_merged$NAME, "</b><br>", "Percent Unemployed: ", prettyNum(round(unemploy_merged$percent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = unemploy_merged$percent
+)
+
+map16<-leaflet() %>%
+  #addMarkers(~long, ~lat, popup = ~as.character(Program.Name), label = ~as.character(Program.Name)) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = unemploy_merged,
+              fillColor = ~pal(percent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+            addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = unemploy_merged$percent,
+            position = "bottomright",
+            title = "Percent Unemployed",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map16
+
+
+```
+
+## Percent with a Bachelor's Degree and Above in Ventura County
+We used ACS data (from 2015) to map the percent of people with at least a bachelor's degree for each Ventura County tract. Oxnard School District is outlined in red. 
+
+```{r bachelors degree, echo=FALSE}
+
+bachelor <- acs.fetch(endyear = 2015, span = 5, geography = geo,
+                     table.number = "B15003", col.names = "pretty")
+
+#names(attributes(race))
+# [1] "endyear"        "span"           "acs.units"      "currency.year"  "modified"       "geography"      "acs.colnames"
+# [8] "estimate"       "standard.error" "class"
+
+#attr(bachelor, "acs.colnames")
+
+#convert to data.frame for merging
+bach_df <- data.frame(paste0(str_pad(bachelor@geography$state, 2, "left", pad="0"),
+                                str_pad(bachelor@geography$county, 3, "left", pad = "0"),
+                                str_pad(bachelor@geography$tract, 6, "left", pad = "0")),
+                         bachelor@estimate[,c("Educational Attainment for the Population 25 Years and Over: Total:", "Educational Attainment for the Population 25 Years and Over: Bachelor's degree", "Educational Attainment for the Population 25 Years and Over: Master's degree", "Educational Attainment for the Population 25 Years and Over: Professional school degree", "Educational Attainment for the Population 25 Years and Over: Doctorate degree")],
+                         stringsAsFactors = FALSE)
+
+bach_df <- select(bach_df, 1:6)
+rownames(bach_df)<-1:nrow(bach_df)
+names(bach_df)<-c("GEOID", "totalpop", "bach", "master", "profess", "doc")
+bach_df$percent <- (100* ((bach_df$bach + bach_df$master + bach_df$profess + bach_df$doc)/bach_df$totalpop))
+
+##time to merge
+
+bach_merged<- geo_join(tracts, bach_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#bach_merged <- bach_merged[bach_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", bach_merged$NAME, "</b><br>", "Percent Bachelor's Degree or Higher: ", prettyNum(round(bach_merged$percent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = bach_merged$percent
+)
+
+map17<-leaflet() %>%
+  #addMarkers(~long, ~lat, popup = ~as.character(Program.Name), label = ~as.character(Program.Name)) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = bach_merged,
+              fillColor = ~pal(percent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+            addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = bach_merged$percent,
+            position = "bottomright",
+            title = "Percent >Bachelor's",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map17
+
+
+```
+
+## Percent of Preschoolers Who Went to Public Preschool in Ventura County 
+We used ACS data (from 2015) to map the percent of preschoolers who went to public preschool for each Ventura County census tract. 
+
+```{r public school, echo=FALSE}
+
+preschool <- acs.fetch(endyear = 2015, span = 5, geography = geo,
+                     table.number = "B14002", col.names = "pretty")
+
+#names(attributes(race))
+# [1] "endyear"        "span"           "acs.units"      "currency.year"  "modified"       "geography"      "acs.colnames"
+# [8] "estimate"       "standard.error" "class"
+
+#attr(preschool, "acs.colnames")
+
+#convert to data.frame for merging
+preschool_df <- data.frame(paste0(str_pad(preschool@geography$state, 2, "left", pad="0"),
+                                str_pad(preschool@geography$county, 3, "left", pad = "0"),
+                                str_pad(preschool@geography$tract, 6, "left", pad = "0")),
+                         preschool@estimate[,c("SEX BY SCHOOL ENROLLMENT BY LEVEL OF SCHOOL BY TYPE OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER: Male: Enrolled in school: Enrolled in nursery school, preschool:", "SEX BY SCHOOL ENROLLMENT BY LEVEL OF SCHOOL BY TYPE OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER: Male: Enrolled in school: Enrolled in nursery school, preschool: Public school", "SEX BY SCHOOL ENROLLMENT BY LEVEL OF SCHOOL BY TYPE OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER: Male: Enrolled in school: Enrolled in nursery school, preschool: Private school",  "SEX BY SCHOOL ENROLLMENT BY LEVEL OF SCHOOL BY TYPE OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER: Female: Enrolled in school: Enrolled in nursery school, preschool:", "SEX BY SCHOOL ENROLLMENT BY LEVEL OF SCHOOL BY TYPE OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER: Female: Enrolled in school: Enrolled in nursery school, preschool: Public school", "SEX BY SCHOOL ENROLLMENT BY LEVEL OF SCHOOL BY TYPE OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER: Female: Enrolled in school: Enrolled in nursery school, preschool: Private school")],
+                         stringsAsFactors = FALSE)
+
+preschool_df <- select(preschool_df, 1:7)
+rownames(preschool_df)<-1:nrow(preschool_df)
+names(preschool_df)<-c("GEOID", "totalpopmale", "publicmale", "privatemale", "totalpopfem", "publicfem", "privatefem")
+preschool_df$percent <- (100* (((preschool_df$publicmale + preschool_df$publicfem))/(preschool_df$totalpopmale + preschool_df$totalpopfem)))
+
+##time to merge
+
+preschool_merged<- geo_join(tracts, preschool_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#preschool_merged <- preschool_merged[preschool_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", preschool_merged$NAME, "</b><br>", "Percent of Kids Who Attended Preschool: Public : ", prettyNum(round(preschool_merged$percent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = preschool_merged$percent
+)
+
+map18<-leaflet() %>%
+  #addMarkers(~long, ~lat, popup = ~as.character(Program.Name), label = ~as.character(Program.Name)) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = preschool_merged,
+              fillColor = ~pal(percent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+              addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = preschool_merged$percent,
+            position = "bottomright",
+            title = "Percent of Kids Who Attended Preschool: Public",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map18
+
+
+```
+
+## Percent of Preschoolers Who Went to Private Preschool in Ventura County
+We used ACS data (from 2015) to map the percent of preschoolers who went to private preschool for each Ventura County census tract. Oxnard School District is outlined in red.  
+
+```{r private preschool, echo=FALSE}
+
+preschool_df$percent <- (100* (((preschool_df$privatemale + preschool_df$privatefem))/(preschool_df$totalpopmale + preschool_df$totalpopfem)))
+
+##time to merge
+
+preschool_merged<- geo_join(tracts, preschool_df, "GEOID", "GEOID", how="inner")
+# we need to only include the salt lake county ids
+#preschool_merged <- preschool_merged[preschool_merged$GEOID %in% c(4900870, 4900420, 4900360, 4900142, 4900600),]
+# there are some tracts with no land that we should exclude
+# pop_merged <- pop_merged[pop_merged$ALAND>0,]
+
+##pop up makes the box when you click on a specific region, so you can label it with a name or geoid, or something else in your data
+popup <- paste0("<b>", preschool_merged$NAME, "</b><br>", "Percent of Kids Who Attended Preschool: Private : ", prettyNum(round(preschool_merged$percent,2), big.mark=","))
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = preschool_merged$percent
+)
+
+map19<-leaflet() %>%
+  #addMarkers(~long, ~lat, popup = ~as.character(Program.Name), label = ~as.character(Program.Name)) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = preschool_merged,
+              fillColor = ~pal(percent),
+              color = "#b2aeae", # you need to use hex colors
+              fillOpacity = 0.7,
+              weight = 1,
+              smoothFactor = 0.2,
+              popup = popup) %>%
+                addPolygons(data = schooldistrict, 
+              group = "% of Poverty Line",
+              color = "#ff0000", # you need to use hex colors
+              fillOpacity = 0, 
+              weight = 2, 
+              smoothFactor = 0.2,
+              popup = popup) %>%
+  addLegend(pal = pal,
+            values = preschool_merged$percent,
+            position = "bottomright",
+            title = "Percent of Kids Who Attended Preschool: Private",
+            labFormat = labelFormat(suffix = "%")
+           ) %>% 
+   addControl(html = "<img src = 'http://static1.squarespace.com/static/57e1fc9c20099e1414dc6070/t/588831041e5b6c469bd404ac/1495638046187/?format=200w'>", position = "topright")
+
+map19
 
 
 ```
