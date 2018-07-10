@@ -285,7 +285,7 @@ mergedpreschool %>%
 ```
 
 ```{r deduplicate, echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
-distinct_rows <- mergedpreschool %>% select("ClientID.x","DOB.x", "school_year.x", "Service Modality", "Ethnicity.x", "Language.x", "Zip.x", "education", "wherelive", "education", "employment", "maritalstatus", "income", "householdmems", "school_year.y", "dataset") %>% distinct()
+distinct_rows <- mergedpreschool %>% select("ClientID.x","DOB.x", "school_year.x", "Service Modality", "Ethnicity.x", "Language.x", "Zip.x", "education", "wherelive", "education", "employment", "maritalstatus", "income", "householdmems", "school_year.y", "Program Title", "Agency.x", "dataset") %>% distinct()
 
 distinct_rows <- distinct_rows %>% 
   group_by(school_year.x, ClientID.x) %>% 
@@ -314,7 +314,7 @@ distinct_rows %>%
   count(rank)
 
 distinct_rows <- distinct_rows %>% 
-  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x",  "Service Modality", "wherelive", "employment", "Zip.x", "maritalstatus", "income", "education", "householdmems", "Zip.x", "school_year.y", "dataset") %>% distinct()
+  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x",  "Service Modality", "wherelive", "employment", "Zip.x", "maritalstatus", "income", "education", "householdmems", "Zip.x", "school_year.y", "dataset", "Program Title", "Agency.x") %>% distinct()
 
 distinct_rows <- distinct_rows %>% 
   group_by(school_year.x, ClientID.x) %>% 
@@ -339,7 +339,7 @@ distinct_rows %>%
   count(rank)
 
 distinct_rows <- distinct_rows %>% 
-  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Service Modality", "wherelive", "employment", "maritalstatus", "income", "education", "householdmems", "Zip.x", "school_year.y", "dataset") %>% distinct()
+  select("ClientID.x","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Service Modality", "wherelive", "employment", "maritalstatus", "income", "education", "householdmems", "Zip.x", "school_year.y", "dataset", "Program Title", "Agency.x") %>% distinct()
 
 distinct_rows <- distinct_rows %>% 
   group_by(school_year.x, ClientID.x) %>% 
@@ -385,7 +385,7 @@ mergedpreschool2 <- mergedpreschool2 %>%
 
 # unique_rows <- !duplicated(mergedpreschool[c("ClientID.x","DOB.x", "school_year.x", "Ethnicity.y", "Language.y", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems")])
 
-distinct_rows2 <- mergedpreschool2 %>% select("ClientID","DOB.x", "Service Modality", "school_year.x", "Ethnicity.x", "Language.x", "Zip.x", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems", "school_year.y", "dataset") %>% distinct()
+distinct_rows2 <- mergedpreschool2 %>% select("ClientID","DOB.x", "Service Modality", "school_year.x", "Ethnicity.x", "Language.x", "Zip.x", "education", "wherelive", "employment", "maritalstatus", "income", "householdmems", "school_year.y", "dataset", "Program Title", "Agency.x") %>% distinct()
 
 distinct_rows2 <- distinct_rows2 %>% 
   group_by(school_year.x, ClientID) %>% 
@@ -406,7 +406,7 @@ distinct_rows2 <- distinct_rows2 %>%
   mutate(rank = rank(`school_year.x`))
 
 distinct_rows2 <- distinct_rows2 %>% 
-  select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Service Modality", "wherelive", "employment", "education", "maritalstatus", "income", "householdmems", "Zip.x", "school_year.y", "dataset") %>% distinct()
+  select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Service Modality", "wherelive", "employment", "education", "maritalstatus", "income", "householdmems", "Zip.x", "school_year.y", "dataset", "Program Title", "Agency.x") %>% distinct()
 
 distinct_rows2 <- distinct_rows2 %>% 
   group_by(school_year.x, ClientID) %>% 
@@ -423,7 +423,7 @@ distinct_rows2 <- distinct_rows2 %>%
   mutate(rank = rank(`school_year.x`))
 
 distinct_rows2 <- distinct_rows2 %>% 
-  select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Service Modality", "wherelive", "employment", "education", "maritalstatus", "income", "householdmems", "Zip.x", "school_year.y", "dataset") %>% distinct()
+  select("ClientID","DOB.x", "school_year.x", "Ethnicity.x", "Language.x", "Service Modality", "wherelive", "employment", "education", "maritalstatus", "income", "householdmems", "Zip.x", "school_year.y", "dataset", "Program Title", "Agency.x") %>% distinct()
 
 distinct_rows2 <- distinct_rows2 %>% 
   group_by(school_year.x, ClientID) %>% 
